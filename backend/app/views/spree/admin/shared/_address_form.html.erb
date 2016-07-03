@@ -2,13 +2,13 @@
 
 <div id="<%= type %>" data-hook="address_fields">
   <div class="field <%= "#{type}-row" %>">
-    <%= f.label :firstname %>
-    <%= f.text_field :firstname, :class => 'fullwidth' %>
+    <%= f.label :lastname %>
+    <%= f.text_field :lastname, :class => 'fullwidth' %>
   </div>
 
   <div class="field <%= "#{type}-row" %>">
-    <%= f.label :lastname %>
-    <%= f.text_field :lastname, :class => 'fullwidth' %>
+    <%= f.label :firstname %>
+    <%= f.text_field :firstname, :class => 'fullwidth' %>
   </div>
 
   <% if Spree::Config[:company] %>
@@ -17,21 +17,6 @@
       <%= f.text_field :company, :class => 'fullwidth' %>
     </div>
   <% end %>
-
-  <div class="field <%= "#{type}-row" %>">
-    <%= f.label :address1 %>
-    <%= f.text_field :address1, :class => 'fullwidth' %>
-  </div>
-
-  <div class="field <%= "#{type}-row" %>">
-    <%= f.label :address2 %>
-    <%= f.text_field :address2, :class => 'fullwidth' %>
-  </div>
-
-  <div class="field <%= "#{type}-row" %>">
-    <%= f.label :city %>
-    <%= f.text_field :city, :class => 'fullwidth' %>
-  </div>
 
   <div class="field <%= "#{type}-row" %>">
     <%= f.label :zipcode %>
@@ -53,6 +38,21 @@
            :disabled => !f.object.country.states.empty?, :class => 'fullwidth state_name' %>
       <%= f.collection_select :state_id, f.object.country.states.sort, :id, :name, {:include_blank => true}, {:class => 'select2 fullwidth', :style => "display: #{f.object.country.states.empty? ? 'none' : 'block' };", :disabled => f.object.country.states.empty?} %>
     </span>
+  </div>
+
+  <div class="field <%= "#{type}-row" %>">
+    <%= f.label :city %>
+    <%= f.text_field :city, :class => 'fullwidth' %>
+  </div>
+
+  <div class="field <%= "#{type}-row" %>">
+    <%= f.label :address1, "町名・番地" %>
+    <%= f.text_field :address1, :class => 'fullwidth' %>
+  </div>
+
+  <div class="field <%= "#{type}-row" %>">
+    <%= f.label :address2, "ビル、マンション名" %>
+    <%= f.text_field :address2, :class => 'fullwidth' %>
   </div>
 
   <div class="field <%= "#{type}-row" %>">

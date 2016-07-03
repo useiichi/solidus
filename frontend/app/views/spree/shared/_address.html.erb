@@ -6,6 +6,12 @@
     </div>
   <% end %>
   <div class="adr">
+    <div class="local">
+      <span class="postal-code"><%= address.zipcode %></span>
+      <span class="region"><%= address.state_text %></span>
+      <span class="locality"><%= address.city %></span>
+      <!--div class="country-name"><%= address.country.try(:name) %></div-->
+    </div>
     <div class="street-address">
       <div class="street-address-line">
         <%= address.address1 %>
@@ -15,12 +21,6 @@
           <%= address.address2 %>
         </div>
       <% end %>
-    </div>
-    <div class="local">
-      <span class="locality"><%= address.city %></span>
-      <span class="region"><%= address.state_text %></span>
-      <span class="postal-code"><%= address.zipcode %></span>
-      <div class="country-name"><%= address.country.try(:name) %></div>
     </div>
   </div>
   <% unless address.phone.blank? %>

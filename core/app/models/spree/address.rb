@@ -80,7 +80,7 @@ module Spree
 
     # @return [String] the full name on this address
     def full_name
-      "#{firstname} #{lastname}".strip
+      "#{lastname} #{firstname}".strip
     end
 
     # @return [String] a string representation of this state
