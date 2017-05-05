@@ -1,25 +1,23 @@
-<% content_for :page_title do %>
-  <%= Spree.t(:editing_option_type) %> <span class="green">"<%= @option_type.name %>"</span>
-<% end %>
+<% admin_breadcrumb(link_to plural_resource_name(Spree::Product), spree.admin_products_path) %>
+<% admin_breadcrumb(link_to plural_resource_name(Spree::OptionType), spree.admin_option_types_path) %>
+<% admin_breadcrumb(@option_type.name) %>
+
 
 <% content_for :page_actions do %>
   <li>
     <span id="new_add_option_value" data-hook>
-      <%= link_to_add_fields Spree.t(:add_option_value), "tbody#option_values", :class => 'button fa fa-plus' %>
+      <%= link_to_add_fields Spree.t(:add_option_value), "tbody#option_values", class: 'button' %>
     </span>
   </li>
-  <li>
-    <%= button_link_to Spree.t(:back_to_option_types_list), spree.admin_option_types_path, :icon => 'arrow-left' %>
-  </li>
-<% end %>
+  <% end %>
 
-<%= render :partial => 'spree/shared/error_messages', :locals => { :target => @option_type } %>
+<%= render partial: 'spree/shared/error_messages', locals: { target: @option_type } %>
 
 <%= form_for [:admin, @option_type] do |f| %>
 
   <fieldset class="no-border-bottom">
     <legend><%= Spree::OptionType.model_name.human %></legend>
-    <%= render :partial => 'form', :locals => { :f => f } %>
+    <%= render partial: 'form', locals: { f: f } %>
   </fieldset>
 
   <fieldset>
@@ -34,10 +32,10 @@
       </thead>
       <tbody id="option_values">
         <%= f.fields_for :option_values, @option_values do |option_value_form| %>
-          <%= render :partial => 'option_value_fields', :locals => { :f => option_value_form } %>
+          <%= render partial: 'option_value_fields', locals: { f: option_value_form } %>
         <% end %>
       </tbody>
     </table>
-    <%= render :partial => 'spree/admin/shared/edit_resource_links' %>
+    <%= render partial: 'spree/admin/shared/edit_resource_links' %>
   </fieldset>
 <% end %>

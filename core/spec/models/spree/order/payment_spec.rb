@@ -6,36 +6,36 @@ module Spree
     let(:updater) { Spree::OrderUpdater.new(order) }
 
     context "processing payments" do
+      let(:order) { create(:order_with_line_items, shipment_cost: 0, line_items_price: 100) }
       before do
         # So that Payment#purchase! is called during processing
         Spree::Config[:auto_capture] = true
-
-        allow(order).to receive_message_chain(:line_items, :empty?).and_return(false)
-        allow(order).to receive_messages total: 100
       end
 
       it 'processes all checkout payments' do
-        payment_1 = create(:payment, amount: 50)
-        payment_2 = create(:payment, amount: 50)
-        allow(order).to receive(:unprocessed_payments).and_return([payment_1, payment_2])
+        payment_1 = create(:payment, order: order, amount: 50)
+        payment_2 = create(:payment, order: order, amount: 50)
 
         order.process_payments!
         updater.update_payment_state
+
         expect(order.payment_state).to eq('paid')
+        expect(order.payment_total).to eq(100)
 
         expect(payment_1).to be_completed
         expect(payment_2).to be_completed
       end
 
       it 'does not go over total for order' do
-        payment_1 = create(:payment, amount: 50)
-        payment_2 = create(:payment, amount: 50)
-        payment_3 = create(:payment, amount: 50)
-        allow(order).to receive(:unprocessed_payments).and_return([payment_1, payment_2, payment_3])
+        payment_1 = create(:payment, order: order, amount: 50)
+        payment_2 = create(:payment, order: order, amount: 50)
+        payment_3 = create(:payment, order: order, amount: 50)
 
         order.process_payments!
         updater.update_payment_state
+
         expect(order.payment_state).to eq('paid')
+        expect(order.payment_total).to eq(100)
 
         expect(payment_1).to be_completed
         expect(payment_2).to be_completed
@@ -43,19 +43,15 @@ module Spree
       end
 
       it "does not use failed payments" do
-        payment_1 = create(:payment, amount: 50)
-        payment_2 = create(:payment, amount: 50, state: 'failed')
+        payment1 = create(:payment, order: order, amount: 50)
+        payment2 = create(:payment, order: order, amount: 50, state: 'failed')
 
-        expect(payment_2).not_to receive(:process!)
+        expect(payment1).to receive(:process!).and_call_original
+        expect(payment2).not_to receive(:process!)
 
         order.process_payments!
-      end
-    end
 
-    context "with no payments" do
-      it "should return falsy" do
-        expect(order).to receive_messages total: 100
-        expect(order.process_payments!).to be_falsy
+        expect(order.payment_total).to eq(50)
       end
     end
 
@@ -81,11 +77,8 @@ module Spree
         }
       end
 
-      # For the reason of this test, please see spree/spree_gateway#132
       it "keeps source attributes on assignment" do
-        Spree::Deprecation.silence do
-          order.update_attributes(payments_attributes: [payment_attributes])
-        end
+        OrderUpdateAttributes.new(order, payments_attributes: [payment_attributes]).apply
         expect(order.unprocessed_payments.last.source.number).to be_present
       end
 
@@ -115,13 +108,6 @@ module Spree
       it "should process the payments" do
         expect(payment).to receive(:process!)
         expect(order.process_payments!).to be_truthy
-      end
-
-      # Regression spec for https://github.com/spree/spree/issues/5436
-      it 'should raise an error if there are no payments to process' do
-        allow(order).to receive_messages unprocessed_payments: []
-        expect(payment).to_not receive(:process!)
-        expect(order.process_payments!).to be_falsey
       end
 
       context "when a payment raises a GatewayError" do
@@ -229,15 +215,27 @@ module Spree
       end
     end
 
-    context "payment required?" do
+    context "payment_required?" do
+      before { order.total = total }
+
       context "total is zero" do
-        before { allow(order).to receive_messages(total: 0) }
-        it { expect(order.payment_required?).to be false }
+        let(:total) { 0 }
+        it { expect(order).not_to be_payment_required }
       end
 
-      context "total > zero" do
-        before { allow(order).to receive_messages(total: 1) }
-        it { expect(order.payment_required?).to be true }
+      context "total is once cent" do
+        let(:total) { 1 }
+        it { expect(order).to be_payment_required }
+      end
+
+      context "total is once dollar" do
+        let(:total) { 1 }
+        it { expect(order).to be_payment_required }
+      end
+
+      context "total is huge" do
+        let(:total) { 2**32 }
+        it { expect(order).to be_payment_required }
       end
     end
   end

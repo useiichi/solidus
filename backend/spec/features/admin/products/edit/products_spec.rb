@@ -15,7 +15,7 @@ describe 'Product Details', type: :feature do
 
       click_link 'Product Details'
 
-      expect(page).to have_css('.page-title', text: 'Products / Bún thịt nướng')
+      expect(page).to have_content('ProductsBún thịt nướng')
       expect(page).to have_field('product_name', with: 'Bún thịt nướng')
       expect(page).to have_field('product_slug', with: 'bun-th-t-n-ng')
       expect(page).to have_field('product_description', with: 'lorem ipsum')
@@ -41,9 +41,9 @@ describe 'Product Details', type: :feature do
 
       fill_in "product_slug", with: ''
       click_button "Update"
-      within('#product_slug_field') { expect(page).to have_content("is too short") }
+      within('#product_slug_field') { expect(page).to have_content("can't be blank") }
 
-      fill_in "product_slug", with: 'another-random-slug-value'
+      fill_in "product_slug", with: 'x'
       click_button "Update"
       expect(page).to have_content("successfully updated!")
     end
@@ -60,7 +60,7 @@ describe 'Product Details', type: :feature do
           click_icon :trash
         end
       end
-      wait_for_ajax
+      expect(page).to have_content('Product has been deleted')
     end
   end
 end

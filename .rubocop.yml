@@ -32,7 +32,13 @@ Style/MutableConstant:
 Style/ClassAndModuleChildren:
   Enabled: false
 
+Style/EmptyElse:
+  Enabled: false
+
 Style/GuardClause:
+  Enabled: false
+
+Style/Next:
   Enabled: false
 
 Style/WordArray:
@@ -218,6 +224,9 @@ Metrics/ClassLength:
   Enabled: false
 
 Metrics/ModuleLength:
+  Enabled: false
+
+Metrics/BlockLength:
   Enabled: false
 
 Metrics/CyclomaticComplexity:

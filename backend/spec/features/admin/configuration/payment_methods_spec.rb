@@ -17,8 +17,9 @@ describe "Payment Methods", type: :feature do
       within("table#listing_payment_methods") do
         expect(all("th")[1].text).to eq("Name")
         expect(all("th")[2].text).to eq("Provider")
-        expect(all("th")[3].text).to eq("Display")
-        expect(all("th")[4].text).to eq("Active")
+        expect(all("th")[3].text).to eq("Available to users")
+        expect(all("th")[4].text).to eq("Available to admin")
+        expect(all("th")[5].text).to eq("Active")
       end
 
       within('table#listing_payment_methods') do
@@ -34,7 +35,7 @@ describe "Payment Methods", type: :feature do
       expect(page).to have_content("New Payment Method")
       fill_in "payment_method_name", with: "check90"
       fill_in "payment_method_description", with: "check90 desc"
-      select "PaymentMethod::Check", from: "gtwy-type"
+      select "Spree::PaymentMethod::Check", from: "gtwy-type"
       click_button "Create"
       expect(page).to have_content("successfully created!")
     end
@@ -73,16 +74,16 @@ describe "Payment Methods", type: :feature do
       create(:credit_card_payment_method)
       click_link "Payment Methods"
       click_icon :edit
-      expect(page).to have_content('TEST MODE')
+      expect(page).to have_content('Test Mode')
 
       select2_search 'Spree::PaymentMethod::Check', from: 'Provider'
       expect(page).to have_content('you must save first')
-      expect(page).to have_no_content('TEST MODE')
+      expect(page).to have_no_content('Test Mode')
 
       # change back
       select2_search 'Spree::Gateway::Bogus', from: 'Provider'
       expect(page).to have_no_content('you must save first')
-      expect(page).to have_content('TEST MODE')
+      expect(page).to have_content('Test Mode')
     end
 
     it "displays message when changing preference source" do
@@ -91,16 +92,16 @@ describe "Payment Methods", type: :feature do
       create(:credit_card_payment_method)
       click_link "Payment Methods"
       click_icon :edit
-      expect(page).to have_content('TEST MODE')
+      expect(page).to have_content('Test Mode')
 
       select2_search 'my_prefs', from: 'Preference Source'
       expect(page).to have_content('you must save first')
-      expect(page).to have_no_content('TEST MODE')
+      expect(page).to have_no_content('Test Mode')
 
       # change back
       select2_search 'Custom', from: 'Preference Source'
       expect(page).to have_no_content('you must save first')
-      expect(page).to have_content('TEST MODE')
+      expect(page).to have_content('Test Mode')
     end
 
     it "updates successfully and keeps secrets" do
@@ -118,7 +119,7 @@ describe "Payment Methods", type: :feature do
       # change back
       select2_search 'Custom', from: 'Preference Source'
       click_on 'Update'
-      expect(page).to have_content('TEST MODE')
+      expect(page).to have_content('Test Mode')
       expect(page).to have_no_content('secret')
     end
   end

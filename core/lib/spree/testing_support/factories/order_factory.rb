@@ -76,6 +76,9 @@ FactoryGirl.define do
 
         after(:create) do |order|
           order.refresh_shipment_rates
+          order.shipments.each do |shipment|
+            shipment.inventory_units.update_all state: 'on_hand', pending: false
+          end
           order.update_column(:completed_at, Time.current)
         end
 
@@ -96,7 +99,6 @@ FactoryGirl.define do
           after(:create) do |order, evaluator|
             create(evaluator.payment_type, amount: order.total, order: order, state: 'completed')
             order.shipments.each do |shipment|
-              shipment.inventory_units.update_all state: 'on_hand'
               shipment.update_column('state', 'ready')
             end
             order.reload
@@ -119,6 +121,8 @@ FactoryGirl.define do
                   shipped_at: Time.current
                 )
               end
+              # We need to update the shipment_state after all callbacks have run
+              order.update_columns(shipment_state: 'shipped')
               order.reload
             end
           end
@@ -137,6 +141,7 @@ FactoryGirl.define do
       promotion_code = promotion.codes.first || create(:promotion_code, promotion: promotion)
 
       promotion.activate(order: order, promotion_code: promotion_code)
+      order.order_promotions.create!(promotion: promotion, promotion_code: promotion_code)
 
       # Complete the order after the promotion has been activated
       order.refresh_shipment_rates

@@ -62,36 +62,28 @@ module Spree
     # Under no circumstances should negative adjustments be applied for the Spanish tax rates.
     #
     # Those rates should never come into play at all and only the French rates should apply.
-    scope :for_zone, ->(zone) { where(zone_id: Spree::Zone.with_shared_members(zone).pluck(:id)) }
-    scope :included_in_price, -> { where(included_in_price: true) }
-
-    # Create tax adjustments for some items that have the same tax zone.
-    #
-    # @deprecated Please use Spree::Tax::OrderAdjuster or Spree::Tax::ItemAdjuster instead.
-    #
-    # @param [Spree::Zone] order_tax_zone is the smalles applicable zone to the order's tax address
-    # @param [Array<Spree::LineItem,Spree::Shipment>] items to be adjusted
-    def self.adjust(order_tax_zone, items)
-      Spree::Deprecation.warn("Please use Spree::Tax::OrderAdjuster or Spree::Tax::ItemAdjuster instead", caller)
-      items.map do |item|
-        Spree::Tax::ItemAdjuster.new(item, rates_for_order_zone: for_zone(order_tax_zone)).adjust!
+    scope :for_zone, ->(zone) do
+      if zone
+        where(zone_id: Spree::Zone.with_shared_members(zone).pluck(:id))
+      else
+        none
       end
     end
+    scope :included_in_price, -> { where(included_in_price: true) }
 
     # Creates necessary tax adjustments for the order.
-    def adjust(order_tax_zone, item)
+    def adjust(_order_tax_zone, item)
       amount = compute_amount(item)
-      return if amount == 0
 
       included = included_in_price && amount > 0
 
-      adjustments.create!({
-        adjustable: item,
+      item.adjustments.create!(
+        source: self,
         amount: amount,
         order_id: item.order_id,
         label: adjustment_label(amount),
         included: included
-      })
+      )
     end
 
     # This method is used by Adjustment#update to recalculate the cost.

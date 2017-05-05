@@ -4,7 +4,7 @@ module Spree
       before_action :load_stock_location, only: [:index, :show, :create]
 
       def index
-        @stock_items = scope.ransack(params[:q]).result.page(params[:page]).per(params[:per_page])
+        @stock_items = paginate(scope.ransack(params[:q]).result)
         respond_with(@stock_items)
       end
 
@@ -28,7 +28,7 @@ module Spree
       end
 
       def update
-        @stock_item = StockItem.accessible_by(current_ability, :update).find(params[:id])
+        @stock_item = Spree::StockItem.accessible_by(current_ability, :update).find(params[:id])
         @stock_location = @stock_item.stock_location
 
         adjustment = count_on_hand_adjustment
@@ -46,7 +46,7 @@ module Spree
       end
 
       def destroy
-        @stock_item = StockItem.accessible_by(current_ability, :destroy).find(params[:id])
+        @stock_item = Spree::StockItem.accessible_by(current_ability, :destroy).find(params[:id])
         @stock_item.destroy
         respond_with(@stock_item, status: 204)
       end
@@ -54,7 +54,7 @@ module Spree
       private
 
       def load_stock_location
-        @stock_location ||= StockLocation.accessible_by(current_ability).find(params.fetch(:stock_location_id))
+        @stock_location ||= Spree::StockLocation.accessible_by(current_ability).find(params.fetch(:stock_location_id))
       end
 
       def scope

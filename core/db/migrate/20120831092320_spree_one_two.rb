@@ -1,9 +1,9 @@
-class SpreeOneTwo < ActiveRecord::Migration
+class SpreeOneTwo < ActiveRecord::Migration[4.2]
   def up
     # This migration is just a compressed version of all the previous
     # migrations for spree_core. Do not run it if one of the core tables
     # already exists. Assume the best.
-    return if table_exists?(:spree_addresses)
+    return if data_source_exists?(:spree_addresses)
 
     create_table :spree_activators do |t|
       t.string     :description
@@ -412,13 +412,6 @@ class SpreeOneTwo < ActiveRecord::Migration
     end
 
     add_index :spree_tokenized_permissions, [:permissable_id, :permissable_type], name: 'index_tokenized_name_and_type'
-
-    create_table :spree_trackers do |t|
-      t.string     :environment
-      t.string     :analytics_id
-      t.boolean    :active, default: true
-      t.timestamps null: true
-    end
 
     create_table :spree_users do |t|
       t.string     :encrypted_password,     limit: 128

@@ -1,30 +1,32 @@
-<% content_for :page_title do %>
-  <%= link_to "#{Spree.t(:editing_user)} #{@user.email}", edit_admin_user_url(@user) %>
-<% end %>
+<% admin_breadcrumb(link_to plural_resource_name(Spree::LegacyUser), spree.admin_users_path) %>
+<% admin_breadcrumb(link_to @user.email, edit_admin_user_url(@user)) %>
+<% admin_breadcrumb(Spree::StoreCredit.model_name.human) %>
+
 
 <%= render 'spree/admin/users/sidebar' %>
 <%= render 'spree/admin/users/tabs', current: :store_credits %>
 <% content_for :page_actions do %>
-  <li><%= link_to_with_icon 'arrow-left', Spree.t("admin.store_credits.back_to_user_list"), admin_users_path, class: 'button' %></li>
   <% if can?(:create, Spree::StoreCredit) %>
-    <li><%= link_to_with_icon 'plus', Spree.t("admin.store_credits.add"), new_admin_user_store_credit_path(@user), class: 'button' %></li>
+    <li><%= link_to Spree.t("admin.store_credits.add"), new_admin_user_store_credit_path(@user), class: 'button' %></li>
   <% end %>
 <% end %>
 
 <% if @store_credits.any? %>
-  <div id='sc-current-balance'>
-    <strong><%= Spree.t("admin.store_credits.current_balance") %> </strong><%= @user.display_total_available_store_credit %>
-  </div>
+<fieldset id='sc-current-balance'>
+  <legend>
+    <%= Spree.t("admin.store_credits.current_balance") %>
+    <%= @user.display_total_available_store_credit %>
+  </legend>
 
-  <table>
+  <table id="sc-table">
     <thead>
-      <th><%= Spree::StoreCredit.human_attribute_name(:amount_credited) %></th>
-      <th><%= Spree::StoreCredit.human_attribute_name(:amount_used) %></th>
-      <th><%= Spree::StoreCredit.human_attribute_name(:amount_authorized) %></th>
-      <th><%= Spree::StoreCredit.human_attribute_name(:category_id) %></th>
-      <th><%= Spree::StoreCredit.human_attribute_name(:created_by_id) %></th>
-      <th><%= Spree::StoreCredit.human_attribute_name(:created_at) %></th>
-      <th><%= Spree::StoreCredit.human_attribute_name(:invalidated_at) %></th>
+      <th class="wrap-text"><%= Spree::StoreCredit.human_attribute_name(:amount_credited) %></th>
+      <th class="wrap-text"><%= Spree::StoreCredit.human_attribute_name(:amount_used) %></th>
+      <th class="wrap-text"><%= Spree::StoreCredit.human_attribute_name(:amount_authorized) %></th>
+      <th class="wrap-text"><%= Spree::StoreCredit.human_attribute_name(:category_id) %></th>
+      <th class="wrap-text"><%= Spree::StoreCredit.human_attribute_name(:created_by_id) %></th>
+      <th class="wrap-text"><%= Spree::StoreCredit.human_attribute_name(:created_at) %></th>
+      <th class="wrap-text"><%= Spree::StoreCredit.human_attribute_name(:invalidated_at) %></th>
       <th data-hook="admin_store_credits_index_header_actions" class="actions"></th>
     <thead>
     <tbody>
@@ -61,9 +63,10 @@
     </tbody>
   </table>
 <% else %>
-  <div class="alpha twelve columns no-objects-found">
+  <div class="col-9 no-objects-found">
     <%= render 'spree/admin/shared/no_objects_found',
                  resource: Spree::StoreCredit,
                  new_resource_url: new_object_url %>
   </div>
 <% end %>
+</fieldset>

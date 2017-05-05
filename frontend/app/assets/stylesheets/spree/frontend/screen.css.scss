@@ -30,13 +30,6 @@ hr {
   border-bottom: $default_border;
 }
 
-/* Custom text-selection colors (remove any text shadows: twitter.com/miketaylr/status/12228805301) */
-::-moz-selection{background: $link_text_color; color: $layout_background_color; text-shadow: none;}
-::selection {background: $link_text_color; color: $layout_background_color; text-shadow: none;}
-
-/*  j.mp/webkit-tap-highlight-color */
-a:link {-webkit-tap-highlight-color: $link_text_color;}
-
 ins {background-color: $link_text_color; color: $layout_background_color; text-decoration: none;}
 mark {background-color: $link_text_color; color: $layout_background_color; font-style: italic; font-weight: bold;}
 
@@ -213,6 +206,16 @@ input[type= "reset"], button, a.button {
 .ie8 {
   a.button {
     line-height: 16px;
+  }
+}
+
+input[type=button],
+input[type=submit],
+button {
+  &.disabled {
+    background:#ccc;
+    border-color: #ccc;
+    text-shadow:none;
   }
 }
 
@@ -922,6 +925,14 @@ p[data-hook="use_billing"] {
   }
   &.error, &.alert {
     color: $c_red;
+  }
+}
+
+.terms_and_conditions {
+  .policy {
+    height: 100px;
+    width: 100%;
+    overflow: scroll;
   }
 }
 

@@ -1,16 +1,16 @@
 module Spree
+  # An order's planned shipments including tracking and cost.
+  #
   class Shipment < Spree::Base
     belongs_to :order, class_name: 'Spree::Order', touch: true, inverse_of: :shipments
     belongs_to :stock_location, class_name: 'Spree::StockLocation'
 
     has_many :adjustments, as: :adjustable, inverse_of: :adjustable, dependent: :delete_all
     has_many :inventory_units, dependent: :destroy, inverse_of: :shipment
-    has_many :shipping_rates, -> { order(:cost) }, dependent: :delete_all
+    has_many :shipping_rates, -> { order(:cost) }, dependent: :destroy
     has_many :shipping_methods, through: :shipping_rates
     has_many :state_changes, as: :stateful
     has_many :cartons, -> { uniq }, through: :inventory_units
-
-    after_save :update_adjustments
 
     before_validation :set_cost_zero_when_nil
 
@@ -72,7 +72,7 @@ module Spree
     self.whitelisted_ransackable_associations = ['order']
     self.whitelisted_ransackable_attributes = ['number']
 
-    delegate :tax_category, to: :selected_shipping_rate, allow_nil: true
+    delegate :tax_category, :tax_category_id, to: :selected_shipping_rate, allow_nil: true
 
     def can_transition_from_pending_to_shipped?
       !requires_shipment?
@@ -136,9 +136,9 @@ module Spree
     def finalize!
       transaction do
         pending_units = inventory_units.select(&:pending?)
-        pending_manifest = ShippingManifest.new(inventory_units: pending_units)
+        pending_manifest = Spree::ShippingManifest.new(inventory_units: pending_units)
         pending_manifest.items.each { |item| manifest_unstock(item) }
-        InventoryUnit.finalize_units!(pending_units)
+        Spree::InventoryUnit.finalize_units!(pending_units)
       end
     end
 
@@ -208,8 +208,13 @@ module Spree
     end
 
     def selected_shipping_rate_id=(id)
-      shipping_rates.update_all(selected: false)
-      shipping_rates.update(id, selected: true)
+      selected_shipping_rate.update(selected: false) if selected_shipping_rate
+      new_rate = shipping_rates.detect { |rate| rate.id == id.to_i }
+      fail(
+        ArgumentError,
+        "Could not find shipping rate id #{id} for shipment #{number}"
+      ) unless new_rate
+      new_rate.update(selected: true)
       save!
     end
 
@@ -277,11 +282,9 @@ module Spree
     def update_amounts
       if selected_shipping_rate
         self.cost = selected_shipping_rate.cost
-        self.adjustment_total = adjustments.additional.map(&:update!).compact.sum
         if changed?
           update_columns(
             cost: cost,
-            adjustment_total: adjustment_total,
             updated_at: Time.current
           )
         end
@@ -293,25 +296,9 @@ module Spree
       if update_attributes params
         if params.key? :selected_shipping_rate_id
           # Changing the selected Shipping Rate won't update the cost (for now)
-          # so we persist the Shipment#cost before calculating order shipment
-          # total and updating payment state (given a change in shipment cost
-          # might change the Order#payment_state)
+          # so we persist the Shipment#cost before running `order.update!`
           update_amounts
-
-          order.updater.update_shipment_total
-          order.updater.update_payment_state
-
-          # Update shipment state only after order total is updated because it
-          # (via Order#paid?) affects the shipment state (YAY)
-          update_columns(
-            state: determine_state(order),
-            updated_at: Time.current
-          )
-
-          # And then it's time to update shipment states and finally persist
-          # order changes
-          order.updater.update_shipment_state
-          order.updater.persist_totals
+          order.update!
         end
 
         true
@@ -371,7 +358,7 @@ module Spree
     end
 
     def address
-      ActiveSupport::Deprecation.warn("Calling Shipment#address is deprecated. Use Order#ship_address instead", caller)
+      Spree::Deprecation.warn("Calling Shipment#address is deprecated. Use Order#ship_address instead", caller)
       order.ship_address if order
     end
 
@@ -399,24 +386,14 @@ module Spree
       stock_location.unstock item.variant, item.quantity, self
     end
 
-    def recalculate_adjustments
-      Spree::ItemAdjustments.new(self).update
-    end
-
     def set_cost_zero_when_nil
       self.cost = 0 unless cost
     end
 
-    def update_adjustments
-      if cost_changed? && state != 'shipped'
-        recalculate_adjustments
-      end
-    end
-
     def ensure_can_destroy
-      unless pending?
+      if shipped? || canceled?
         errors.add(:state, :cannot_destroy, state: state)
-        return false
+        throw :abort
       end
     end
   end

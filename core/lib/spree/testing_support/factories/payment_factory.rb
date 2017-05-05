@@ -6,7 +6,7 @@ require 'spree/testing_support/factories/store_credit_factory'
 FactoryGirl.define do
   factory :payment, aliases: [:credit_card_payment], class: Spree::Payment do
     association(:payment_method, factory: :credit_card_payment_method)
-    association(:source, factory: :credit_card)
+    source { create(:credit_card, user: order.user, address: order.bill_address) }
     order
     state 'checkout'
     response_code '12345'
@@ -26,6 +26,10 @@ FactoryGirl.define do
       state 'completed'
 
       refunds { build_list :refund, 1, amount: refund_amount }
+    end
+
+    initialize_with do
+      order.payments.new(attributes)
     end
   end
 

@@ -33,7 +33,7 @@ describe 'Users', type: :feature do
     end
 
     it 'can go back to the users list' do
-      expect(page).to have_link Spree.t(:back_to_users_list), href: spree.admin_users_path
+      expect(page).to have_link Spree::LegacyUser.model_name.human(count: :other), href: spree.admin_users_path
     end
 
     it 'can navigate to the account page' do
@@ -120,12 +120,26 @@ describe 'Users', type: :feature do
 
     it 'can edit user roles' do
       Spree::Role.create name: "admin"
-      click_link user_a.email
+      click_link 'Account'
 
       check 'user_spree_role_admin'
       click_button 'Update'
       expect(page).to have_text 'Account updated'
       expect(find_field('user_spree_role_admin')).to be_checked
+    end
+
+    it 'can delete user roles' do
+      user_a.spree_roles << Spree::Role.create(name: "dummy")
+      click_link 'Account'
+
+      user_a.spree_roles.each do |role|
+        uncheck "user_spree_role_#{role.name}"
+      end
+
+      click_button 'Update'
+      expect(page).to have_text 'Account updated'
+      expect(find_field('user_spree_role_dummy')).not_to be_checked
+      expect(user_a.reload.spree_roles).to be_empty
     end
 
     it 'can edit user shipping address' do
@@ -173,7 +187,13 @@ describe 'Users', type: :feature do
         fill_in 'user_email', with: 'something'
         click_button 'Update'
 
-        expect(page).to have_content("Email is invalid")
+        within('#errorExplanation') do
+          expect(page).to have_content("Email is invalid")
+        end
+
+        within('.flash.error') do
+          expect(page).to have_content("Email is invalid")
+        end
       end
     end
 

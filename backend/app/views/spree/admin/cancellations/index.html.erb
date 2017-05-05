@@ -1,6 +1,6 @@
-<% content_for :page_title do %>
-  <%= link_to Spree.t(:order_number, number: @order.number), spree.edit_admin_order_path(@order) %> - <%= Spree.t(:cancel_inventory) %>
-<% end %>
+<%= render partial: 'spree/admin/shared/order_tabs', locals: {current: 'Cancel Inventory'} %>
+
+<% admin_breadcrumb(Spree.t(:cancel_inventory)) %>
 
 <table class="stock-contents index">
   <colgroup>
@@ -25,7 +25,7 @@
       <% @inventory_units.each do |inventory_unit| %>
         <tr class="inventory-unit">
           <td class="inventory-unit-image">
-            <%= image_tag inventory_unit.variant.display_image.attachment(:mini) %>
+            <%= render 'spree/admin/shared/image', image: inventory_unit.variant.display_image, size: :mini %>
           </td>
           <td class="inventory-unit-name">
             <%= inventory_unit.variant.product.name %><br><%= "(" + variant_options(inventory_unit.variant) + ")" unless inventory_unit.variant.option_values.empty? %>

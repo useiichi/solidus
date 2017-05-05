@@ -24,15 +24,15 @@
       <% else %>
         <% # Legacy layout %>
         <div class="container">
-          <div class="row">
-            <div class="<%= 'with-sidebar ' if content_for?(:sidebar) %>" id="content" data-hook>
+          <div class="<%= 'with-sidebar ' if content_for?(:sidebar) %>" id="content" data-hook>
+            <div class="row">
               <% if content_for?(:tabs) %>
-                <div class="sixteen columns">
+                <div class="col-12">
                   <%= yield :tabs %>
                 </div>
               <% end %>
-              <div class="js-content-below-tabs <%= if content_for?(:sidebar) then 'twelve' else 'sixteen' end %> columns">
-                <%= render :partial => 'spree/admin/shared/table_filter' %>
+              <div class="js-content-below-tabs <%= if content_for?(:sidebar) then 'col-9' else 'col-12' end %>">
+                <%= render partial: 'spree/admin/shared/table_filter' %>
                 <%= yield %>
               </div>
 

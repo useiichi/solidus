@@ -1,6 +1,7 @@
 @import 'bourbon';
 
 @import 'spree/backend/globals/functions';
+@import 'spree/backend/globals/deprecation';
 @import 'spree/backend/globals/variables_override';
 @import 'spree/backend/globals/variables';
 
@@ -11,6 +12,7 @@
 
 @import 'spree/backend/shared/skeleton';
 @import 'spree/backend/shared/typography';
+@import 'spree/backend/shared/images';
 @import 'spree/backend/shared/tables';
 @import 'spree/backend/shared/icons';
 @import 'spree/backend/shared/forms';
@@ -20,8 +22,11 @@
 
 @import 'spree/backend/components/states';
 @import 'spree/backend/components/actions';
+@import 'spree/backend/components/breadcrumb';
+@import 'spree/backend/components/number_with_currency';
 @import 'spree/backend/components/date-picker';
 @import 'spree/backend/components/hint';
+@import 'spree/backend/components/image_placeholder';
 @import 'spree/backend/components/list_group';
 @import 'spree/backend/components/messages';
 @import 'spree/backend/components/progress';
@@ -36,14 +41,12 @@
 @import 'spree/backend/plugins/select2';
 @import 'spree/backend/plugins/bootstrap_tooltip';
 
-@import 'spree/backend/sections/adjustments_table';
+@import 'spree/backend/sections/adjustments';
 @import 'spree/backend/sections/orders';
 @import 'spree/backend/sections/products';
 @import 'spree/backend/sections/promotions';
-@import 'spree/backend/sections/edit_checkouts';
 @import 'spree/backend/sections/bulk_transfer';
 @import 'spree/backend/sections/return_authorizations';
-@import 'spree/backend/sections/tax_zones';
 @import 'spree/backend/sections/log_entries';
 @import 'spree/backend/sections/taxonomies';
 @import 'spree/backend/sections/taxons';

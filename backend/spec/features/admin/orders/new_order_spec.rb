@@ -1,6 +1,8 @@
 require 'spec_helper'
 
 describe "New Order", type: :feature do
+  include OrderFeatureHelper
+
   let!(:product) { create(:product_in_stock) }
   let!(:state) { create(:state) }
   let!(:store) { create(:store) }
@@ -24,18 +26,15 @@ describe "New Order", type: :feature do
 
   it "completes new order succesfully without using the cart", js: true do
     click_on 'Cart'
-    select2_search product.name, from: Spree.t(:name_or_sku)
+    add_line_item product.name
 
-    fill_in_quantity("table.stock-levels", "quantity_0", 2)
-
-    click_icon :plus
     click_on "Customer"
 
     within "#select-customer" do
       targetted_select2_search user.email, from: "#s2id_customer_search"
     end
 
-    check "order_use_billing"
+    expect(page).to have_checked_field('order_use_billing')
     fill_in_address
     click_on "Update"
 
@@ -45,7 +44,7 @@ describe "New Order", type: :feature do
     expect(current_path).to eql(spree.admin_order_payments_path(Spree::Order.last))
 
     click_on "Confirm"
-    click_on "Complete"
+    click_on "Complete Order"
 
     expect(current_path).to eql(spree.edit_admin_order_path(Spree::Order.last))
 
@@ -53,19 +52,16 @@ describe "New Order", type: :feature do
     click_icon "capture"
 
     click_on "Shipments"
-    click_on "ship"
+    click_on "Ship"
 
     within '.carton-state' do
-      expect(page).to have_content('SHIPPED')
+      expect(page).to have_content('shipped')
     end
   end
 
   it 'can create split payments', js: true do
     click_on 'Cart'
-    select2_search product.name, from: Spree.t(:name_or_sku)
-
-    fill_in_quantity("table.stock-levels", "quantity_0", 2)
-    click_icon :plus
+    add_line_item product.name
 
     click_on "Customer"
 
@@ -73,7 +69,7 @@ describe "New Order", type: :feature do
       targetted_select2_search user.email, from: "#s2id_customer_search"
     end
 
-    check "order_use_billing"
+    expect(page).to have_checked_field('order_use_billing')
     fill_in_address
     click_on "Update"
 
@@ -92,11 +88,7 @@ describe "New Order", type: :feature do
   context "adding new item to the order", js: true do
     it "inventory items show up just fine and are also registered as shipments" do
       click_on 'Cart'
-      select2_search product.name, from: Spree.t(:name_or_sku)
-
-      fill_in_quantity('table.stock-levels', 'quantity_0', 2)
-
-      click_icon :plus
+      add_line_item product.name
 
       within(".line-items") do
         expect(page).to have_content(product.name)
@@ -108,7 +100,7 @@ describe "New Order", type: :feature do
         targetted_select2_search user.email, from: "#s2id_customer_search"
       end
 
-      check "order_use_billing"
+      expect(page).to have_checked_field('order_use_billing')
       fill_in_address
       click_on "Update"
 
@@ -128,11 +120,7 @@ describe "New Order", type: :feature do
 
     it "can still see line items" do
       click_on 'Cart'
-      select2_search product.name, from: Spree.t(:name_or_sku)
-
-      fill_in_quantity('table.stock-levels', 'quantity_0', 1)
-
-      click_icon :plus
+      add_line_item product.name
 
       within(".line-items") do
         within(".line-item-name") do
@@ -157,7 +145,7 @@ describe "New Order", type: :feature do
         targetted_select2_search user.email, from: "#s2id_customer_search"
       end
 
-      check "order_use_billing"
+      expect(page).to have_checked_field('order_use_billing')
       fill_in_address
       click_on "Update"
 
@@ -173,24 +161,23 @@ describe "New Order", type: :feature do
       click_on "Continue"
 
       within(".additional-info .state") do
-        expect(page).to have_content("CONFIRM")
+        expect(page).to have_content("confirm")
       end
     end
   end
 
   # Regression test for https://github.com/spree/spree/issues/5327
   context "customer with default credit card", js: true do
+    let!(:credit_card) { create(:credit_card, user: user) }
+
     before do
-      create(:credit_card, default: true, user: user)
+      user.wallet.add(credit_card)
     end
+
     it "transitions to delivery not to complete" do
       click_on 'Cart'
-      select2_search product.name, from: Spree.t(:name_or_sku)
-      within("table.stock-levels") do
-        find('.variant_quantity').set(1)
-      end
 
-      click_icon :plus
+      add_line_item product.name
 
       expect(page).to have_css('.line-item')
 
@@ -219,7 +206,7 @@ describe "New Order", type: :feature do
     fill_in "Street Address",            with: "100 first lane"
     fill_in "Street Address (cont'd)",   with: "#101"
     fill_in "City",                      with: "Bethesda"
-    fill_in "Zip",                       with: "20170"
+    fill_in "Zip Code",                  with: "20170"
     targetted_select2_search state.name, from: "#s2id_order_#{kind}_address_attributes_state_id"
     fill_in "Phone",                     with: "123-456-7890"
   end

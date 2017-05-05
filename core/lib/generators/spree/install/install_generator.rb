@@ -108,24 +108,19 @@ Spree::Auth::Engine.load_seed if defined?(Spree::Auth)
 
     def install_migrations
       say_status :copying, "migrations"
-      silence_stream(STDOUT) do
-        silence_warnings { rake 'railties:install:migrations' }
-      end
+      `rake railties:install:migrations`
     end
 
     def create_database
       say_status :creating, "database"
-      silence_stream(STDOUT) do
-        silence_stream(STDERR) do
-          silence_warnings { rake 'db:create' }
-        end
-      end
+      rake 'db:create'
     end
 
     def run_migrations
       if @run_migrations
         say_status :running, "migrations"
-        quietly { rake 'db:migrate' }
+
+        rake 'db:migrate VERBOSE=false'
       else
         say_status :skipping, "migrations (don't forget to run rake db:migrate)"
       end
@@ -139,12 +134,7 @@ Spree::Auth::Engine.load_seed if defined?(Spree::Auth)
         rake_options << "ADMIN_EMAIL=#{options[:admin_email]}" if options[:admin_email]
         rake_options << "ADMIN_PASSWORD=#{options[:admin_password]}" if options[:admin_password]
 
-        cmd = lambda { rake("db:seed #{rake_options.join(' ')}") }
-        if options[:auto_accept] || (options[:admin_email] && options[:admin_password])
-          quietly(&cmd)
-        else
-          cmd.call
-        end
+        rake("db:seed #{rake_options.join(' ')}")
       else
         say_status :skipping, "seed data (you can always run rake db:seed)"
       end
@@ -153,29 +143,30 @@ Spree::Auth::Engine.load_seed if defined?(Spree::Auth)
     def load_sample_data
       if @load_sample_data
         say_status :loading, "sample data"
-        quietly { rake 'spree_sample:load' }
+        rake 'spree_sample:load'
       else
         say_status :skipping, "sample data (you can always run rake spree_sample:load)"
       end
     end
 
-    def notify_about_routes
+    def install_routes
       insert_into_file File.join('config', 'routes.rb'), after: "Rails.application.routes.draw do\n" do
-        %{
+        <<-ROUTES
   # This line mounts Spree's routes at the root of your application.
   # This means, any requests to URLs such as /products, will go to Spree::ProductsController.
   # If you would like to change where this engine is mounted, simply change the :at option to something different.
   #
   # We ask that you don't use the :as option here, as Spree relies on it being the default of "spree"
-  mount Spree::Core::Engine, :at => '/'
-        }
+  mount Spree::Core::Engine, at: '/'
+
+        ROUTES
       end
 
       unless options[:quiet]
         puts "*" * 50
         puts "We added the following line to your application's config/routes.rb file:"
         puts " "
-        puts "    mount Spree::Core::Engine, :at => '/'"
+        puts "    mount Spree::Core::Engine, at: '/'"
       end
     end
 

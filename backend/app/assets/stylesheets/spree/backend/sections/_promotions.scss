@@ -54,9 +54,14 @@
     position: relative;
     padding-bottom: 10px;
 
+    > .row {
+      margin-left: 10px;
+    }
+
     .remove {
       position: absolute;
-      left: -15px;
+      cursor: pointer;
+      left: 0;
       top: 10px;
 
       &:hover {
@@ -116,13 +121,12 @@
     cursor: pointer;
 
     &:hover {
-      color: $color-error;
+      color: $brand-danger;
     }
   }
 }
 
 .promotion-title {
-  text-transform: uppercase;
   text-align: left;
   font-size: 85%;
   border-bottom: 1px solid $color-border;

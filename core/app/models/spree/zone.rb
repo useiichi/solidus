@@ -16,16 +16,18 @@ module Spree
     after_save :remove_previous_default
 
     scope :with_member_ids, ->(state_ids, country_ids) do
-      return none if !state_ids.present? && !country_ids.present?
-
-      spree_zone_members_table = Spree::ZoneMember.arel_table
-      matching_state =
-        spree_zone_members_table[:zoneable_type].eq("Spree::State").
-        and(spree_zone_members_table[:zoneable_id].in(state_ids))
-      matching_country =
-        spree_zone_members_table[:zoneable_type].eq("Spree::Country").
-        and(spree_zone_members_table[:zoneable_id].in(country_ids))
-      joins(:zone_members).where(matching_state.or(matching_country)).distinct
+      if !state_ids.present? && !country_ids.present?
+        none
+      else
+        spree_zone_members_table = Spree::ZoneMember.arel_table
+        matching_state =
+          spree_zone_members_table[:zoneable_type].eq("Spree::State").
+          and(spree_zone_members_table[:zoneable_id].in(state_ids))
+        matching_country =
+          spree_zone_members_table[:zoneable_type].eq("Spree::Country").
+          and(spree_zone_members_table[:zoneable_id].in(country_ids))
+        joins(:zone_members).where(matching_state.or(matching_country)).distinct
+      end
     end
 
     scope :for_address, ->(address) do
@@ -41,14 +43,22 @@ module Spree
 
     self.whitelisted_ransackable_attributes = ['description']
 
+    # Returns the zone marked as `default_tax`.
+    # @deprecated Please run the `solidus:migrations:create_vat_prices` rake task
     def self.default_tax
-      where(default_tax: true).first
+      default_tax_zone = where(default_tax: true).first
+      if default_tax_zone
+        Spree::Deprecation.warn("Please run the `solidus:migrations:create_vat_prices` rake task.", caller)
+        default_tax_zone
+      end
     end
 
     # Returns the most specific matching zone for an address. Specific means:
     # A State zone wins over a country zone, and a zone with few members wins
     # over one with many members. If there is no match, returns nil.
     def self.match(address)
+      Spree::Deprecation.warn("Spree::Zone.match is deprecated. Please use Spree::Zone.for_address instead.", caller)
+
       return unless address && (matches =
                                   with_member_ids(address.state_id, address.country_id).
                                   order(:zone_members_count, :created_at, :id).
@@ -158,6 +168,7 @@ module Spree
         (target.zoneables.collect(&:country).collect(&:id) - zoneables.collect(&:id)).empty?
       end
     end
+    deprecate :contains?, deprecator: Spree::Deprecation
 
     private
 
@@ -174,7 +185,7 @@ module Spree
     def set_zone_members(ids, type)
       zone_members.destroy_all
       ids.reject(&:blank?).map do |id|
-        member = ZoneMember.new
+        member = Spree::ZoneMember.new
         member.zoneable_type = type
         member.zoneable_id = id
         members << member

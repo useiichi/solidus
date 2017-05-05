@@ -17,24 +17,21 @@ namespace :common do
 
     puts "Setting up dummy database..."
 
-    silence_stream(STDOUT) do
-      sh "bundle exec rake db:drop db:create db:migrate"
-    end
+    sh "bin/rails db:environment:set RAILS_ENV=test"
+    sh "bin/rails db:drop db:create db:migrate VERBOSE=false RAILS_ENV=test"
 
     begin
       require "generators/#{ENV['LIB_NAME']}/install/install_generator"
       puts 'Running extension installation generator...'
       "#{ENV['LIB_NAME'].camelize}::Generators::InstallGenerator".constantize.start(["--auto-run-migrations"])
     rescue LoadError
-      puts 'Skipping installation no generator to run...'
+      # No extension generator to run
     end
   end
 
   task :seed do |_t, _args|
     puts "Seeding ..."
 
-    silence_stream(STDOUT) do
-      sh "bundle exec rake db:seed RAILS_ENV=test"
-    end
+    sh "bundle exec rake db:seed RAILS_ENV=test"
   end
 end

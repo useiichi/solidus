@@ -1,14 +1,13 @@
-<%= render :partial => 'spree/admin/shared/order_tabs', :locals => { :current => 'Customer Returns' } %>
+<%= render partial: 'spree/admin/shared/order_tabs', locals: { current: 'Customer Returns' } %>
 
-<% content_for :page_title do %>
-  <i class="fa fa-arrow-right"></i> <%= Spree.t(:editing_reimbursement) %> #<%= @reimbursement.number %>
-<% end %>
+<% admin_breadcrumb("#{Spree.t(:editing_reimbursement)} #{@reimbursement.number}") %>
+
 
 <% content_for :page_actions do %>
-  <li><%= button_link_to Spree.t(:back_to_customer_return), url_for([:edit, :admin, @order, @reimbursement.customer_return]), :icon => 'arrow-left' %></li>
+  <li><%= button_link_to Spree.t(:back_to_customer_return), url_for([:edit, :admin, @order, @reimbursement.customer_return]) %></li>
 <% end %>
 
-<%= render :partial => 'spree/shared/error_messages', :locals => { :target => @reimbursement } %>
+<%= render partial: 'spree/shared/error_messages', locals: { target: @reimbursement } %>
 
 <%= form_for [:admin, @order, @reimbursement] do |f| %>
   <fieldset class='no-border-bottom'>
@@ -17,11 +16,11 @@
       <thead>
         <tr>
           <th><%= Spree::Product.model_name.human %></th>
-          <th><%= Spree::ReturnItem.human_attribute_name(:preferred_reimbursement_type_id) %></th>
-          <th><%= Spree::ReturnItem.human_attribute_name(:override_reimbursement_type_id) %></th>
-          <th><%= Spree::ReturnItem.human_attribute_name(:amount) %></th>
+          <th class="wrap-text"><%= Spree::ReturnItem.human_attribute_name(:preferred_reimbursement_type_id) %></th>
+          <th class="wrap-text"><%= Spree::ReturnItem.human_attribute_name(:override_reimbursement_type_id) %></th>
+          <th class="wrap-text"><%= Spree::ReturnItem.human_attribute_name(:amount) %></th>
           <th><%= Spree::ReturnItem.human_attribute_name(:total) %></th>
-          <th><%= Spree::ReturnItem.human_attribute_name(:exchange_variant) %></th>
+          <th class="wrap-text"><%= Spree::ReturnItem.human_attribute_name(:exchange_variant) %></th>
         </tr>
       </thead>
       <tbody>
@@ -98,10 +97,10 @@
   <% end %>
   <div class="form-buttons filter-actions actions" data-hook="reimburse-buttons">
     <% if !@reimbursement.reimbursed? %>
-      <%= button_to [:perform, :admin, @order, @reimbursement], {class: 'button fa fa-reply', method: 'post'} do %>
+      <%= button_to [:perform, :admin, @order, @reimbursement], { class: 'button', method: 'post' } do %>
         <%= Spree.t(:reimburse) %>
       <% end %>
-      <%= button_link_to Spree.t('actions.cancel'), url_for([:admin, @order, @reimbursement.customer_return]), :icon => 'remove' %>
+      <%= button_link_to Spree.t('actions.cancel'), url_for([:admin, @order, @reimbursement.customer_return]) %>
     <% end %>
   </div>
 </fieldset>

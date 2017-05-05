@@ -1,11 +1,5 @@
 require 'spec_helper'
 
-class FakeCalculator < Spree::Calculator
-  def compute(_computable)
-    5
-  end
-end
-
 describe Spree::Order, type: :model do
   let(:store) { build_stubbed(:store) }
   let(:user) { stub_model(Spree::LegacyUser, email: "spree@example.com") }
@@ -37,6 +31,28 @@ describe Spree::Order, type: :model do
     context 'when a store is assigned' do
       subject { Spree::Order.new(store: create(:store)) }
       it { is_expected.to be_valid }
+    end
+  end
+
+  describe "#cancel!" do
+    context "with captured store credit" do
+      let!(:store_credit_payment_method) { create(:store_credit_payment_method) }
+      let(:order_total) { 500.00 }
+      let(:store_credit) { create(:store_credit, amount: order_total) }
+      let(:order) { create(:order_with_line_items, user: store_credit.user, line_items_price: order_total) }
+
+      before do
+        order.add_store_credit_payments
+        order.finalize!
+        order.capture_payments!
+      end
+
+      subject { order.cancel! }
+
+      it "cancels the order" do
+        expect{ subject }.to change{ order.can_cancel? }.from(true).to(false)
+        expect(order).to be_canceled
+      end
     end
   end
 
@@ -91,10 +107,11 @@ describe Spree::Order, type: :model do
 
     it "update and persist totals" do
       expect(shipment).to receive :update_amounts
-      expect(order.updater).to receive :update_shipment_total
-      expect(order.updater).to receive :persist_totals
+      expect(order.updater).to receive :update
 
-      order.set_shipments_cost
+      Spree::Deprecation.silence do
+        order.set_shipments_cost
+      end
     end
   end
 
@@ -494,7 +511,8 @@ describe Spree::Order, type: :model do
       payment_method = Spree::PaymentMethod.create!({
         name: "Fake",
         active: true,
-        display_on: "front_end"
+        available_to_users: true,
+        available_to_admin: false
       })
       expect(order.available_payment_methods).to include(payment_method)
     end
@@ -503,33 +521,47 @@ describe Spree::Order, type: :model do
       payment_method = Spree::PaymentMethod.create!({
         name: "Fake",
         active: true,
-        display_on: "both"
+        available_to_users: true,
+        available_to_admin: true
       })
       expect(order.available_payment_methods).to include(payment_method)
     end
 
-    it "does not include a payment method twice if display_on is blank" do
+    it "does not include a payment method twice" do
       payment_method = Spree::PaymentMethod.create!({
         name: "Fake",
         active: true,
-        display_on: "both"
+        available_to_users: true,
+        available_to_admin: true
       })
       expect(order.available_payment_methods.count).to eq(1)
       expect(order.available_payment_methods).to include(payment_method)
     end
 
+    it "does not include inactive payment methods" do
+      Spree::PaymentMethod.create!({
+        name: "Fake",
+        active: false,
+        available_to_users: true,
+        available_to_admin: true
+      })
+      expect(order.available_payment_methods.count).to eq(0)
+    end
+
     context "with more than one payment method" do
       subject { order.available_payment_methods }
 
-      let!(:first_method) { FactoryGirl.create(:payment_method, display_on: :both) }
-      let!(:second_method) { FactoryGirl.create(:payment_method, display_on: :both) }
+      let!(:first_method) { FactoryGirl.create(:payment_method, available_to_users: true,
+                                               available_to_admin: true) }
+      let!(:second_method) { FactoryGirl.create(:payment_method, available_to_users: true,
+                                               available_to_admin: true) }
 
       before do
         second_method.move_to_top
       end
 
       it "respects the order of methods based on position" do
-        expect(subject).to eql([second_method, first_method])
+        expect(subject).to eq([second_method, first_method])
       end
     end
 
@@ -553,6 +585,23 @@ describe Spree::Order, type: :model do
             [payment_method_with_store]
           )
         end
+
+        context 'and the store has an extra payment method unavailable to users' do
+          let!(:admin_only_payment_method) do create(:payment_method,
+                                                     available_to_users: false,
+                                                     available_to_admin: true)
+          end
+
+          before do
+            store_with_payment_methods.payment_methods << admin_only_payment_method
+          end
+
+          it 'returns only the payment methods available to users for that store' do
+            expect(order.available_payment_methods).to match_array(
+              [payment_method_with_store]
+            )
+          end
+        end
       end
 
       context 'when the store does not have payment methods' do
@@ -569,16 +618,12 @@ describe Spree::Order, type: :model do
 
   context "#apply_free_shipping_promotions" do
     it "calls out to the FreeShipping promotion handler" do
-      shipment = double('Shipment')
-      allow(order).to receive_messages shipments: [shipment]
-      expect(Spree::PromotionHandler::FreeShipping).to receive(:new).and_return(handler = double)
-      expect(handler).to receive(:activate)
+      expect_any_instance_of(Spree::PromotionHandler::FreeShipping).to(
+        receive(:activate)
+      ).and_call_original
 
-      expect(Spree::ItemAdjustments).to receive(:new).with(shipment).and_return(adjuster = double)
-      expect(adjuster).to receive(:update)
+      expect(order.updater).to receive(:update).and_call_original
 
-      expect(order.updater).to receive(:update_shipment_total)
-      expect(order.updater).to receive(:persist_totals)
       order.apply_free_shipping_promotions
     end
   end
@@ -922,25 +967,6 @@ describe Spree::Order, type: :model do
 
       expect { shipment.reload }.not_to raise_error
     end
-
-    context "unreturned exchange" do
-      let!(:first_shipment) do
-        create(:shipment, order: subject, state: first_shipment_state, created_at: 5.days.ago)
-      end
-      let!(:second_shipment) do
-        create(:shipment, order: subject, state: second_shipment_state, created_at: 5.days.ago)
-      end
-
-      context "all shipments are shipped" do
-        let(:first_shipment_state) { "shipped" }
-        let(:second_shipment_state) { "shipped" }
-
-        it "returns the shipments" do
-          subject.create_proposed_shipments
-          expect(subject.shipments).to match_array [first_shipment, second_shipment]
-        end
-      end
-    end
   end
 
   describe "#all_inventory_units_returned?" do
@@ -970,93 +996,6 @@ describe Spree::Order, type: :model do
       it "is false" do
         expect(subject).to eq false
       end
-    end
-  end
-
-  describe "#unreturned_exchange?" do
-    let(:order) { create(:order_with_line_items) }
-    subject { order.reload.unreturned_exchange? }
-
-    context "the order does not have a shipment" do
-      before { order.shipments.destroy_all }
-
-      it { is_expected.to be false }
-    end
-
-    context "shipment created after order" do
-      it { is_expected.to be false }
-    end
-
-    context "shipment created before order" do
-      before do
-        order.shipments.first.update_attributes!(created_at: order.created_at - 1.day)
-      end
-
-      it { is_expected.to be true }
-    end
-  end
-
-  describe '.unreturned_exchange' do
-    let(:order) { create(:order_with_line_items) }
-    subject { described_class.unreturned_exchange }
-
-    it 'includes orders that have a shipment created prior to the order' do
-      order.shipments.first.update_attributes!(created_at: order.created_at - 1.day)
-      expect(subject).to include order
-    end
-
-    it 'excludes orders that were created prior to their shipment' do
-      expect(subject).not_to include order
-    end
-
-    it 'excludes orders with no shipment' do
-      order.shipments.destroy_all
-      expect(subject).not_to include order
-    end
-  end
-
-  describe "#fully_discounted?" do
-    let(:line_item) { Spree::LineItem.new(price: 10, quantity: 1) }
-    let(:shipment) { Spree::Shipment.new(cost: 10) }
-    let(:payment) { Spree::Payment.new(amount: 10) }
-
-    around do |example|
-      Spree::Deprecation.silence do
-        example.run
-      end
-    end
-
-    before do
-      allow(order).to receive(:line_items) { [line_item] }
-      allow(order).to receive(:shipments) { [shipment] }
-      allow(order).to receive(:payments) { [payment] }
-    end
-
-    context "the order had no inventory-related cost" do
-      before do
-        # discount the cost of the line items
-        allow(order).to receive(:adjustment_total) { -5 }
-        allow(line_item).to receive(:adjustment_total) { -5 }
-
-        # but leave some shipment payment amount
-        allow(shipment).to receive(:adjustment_total) { 0 }
-      end
-
-      it { expect(order.fully_discounted?).to eq true }
-    end
-
-    context "the order had inventory-related cost" do
-      before do
-        # partially discount the cost of the line item
-        allow(order).to receive(:adjustment_total) { 0 }
-        allow(line_item).to receive(:adjustment_total) { -5 }
-
-        # and partially discount the cost of the shipment so the total
-        # discount matches the item total for test completeness
-        allow(shipment).to receive(:adjustment_total) { -5 }
-      end
-
-      it { expect(order.fully_discounted?).to eq false }
     end
   end
 

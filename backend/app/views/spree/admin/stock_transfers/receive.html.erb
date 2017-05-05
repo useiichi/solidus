@@ -1,15 +1,13 @@
-<% content_for :page_title do %>
-  <%= "#{Spree.t(:receiving)} #{@stock_transfer.number}" %>
-<% end %>
+<% admin_breadcrumb("#{Spree.t(:receiving)} #{@stock_transfer.number}") %>
+
 
 <% content_for :page_actions do %>
   <li>
-    <%= button_link_to Spree.t(:back_to_stock_transfers_list), admin_stock_transfers_path, :icon => 'arrow-left' %>
+    <%= button_link_to Spree.t(:back_to_stock_transfers_list), admin_stock_transfers_path %>
   </li>
   <li>
     <%= button_link_to Spree.t(:close),
       close_admin_stock_transfer_path(@stock_transfer),
-      icon: 'lock',
       method: 'put',
       data: { confirm: Spree.t('close_stock_transfer.confirm') } %>
   </li>
@@ -30,7 +28,7 @@
   <div data-hook="transfer_item_selection">
     <%= hidden_field_tag :stock_transfer_number, @stock_transfer.number %>
     <%= hidden_field_tag :variant_display_attributes, @variant_display_attributes.to_json %>
-    <%= text_field_tag :transfer_item_variant_id, "", :class => "variant_autocomplete fullwidth" %>
+    <%= text_field_tag :transfer_item_variant_id, "", class: "variant_autocomplete fullwidth" %>
   </div>
 </fieldset>
 

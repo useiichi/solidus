@@ -1,5 +1,5 @@
 .style-guide {
-  @include display(flex);
+  display: flex;
 
   &-sidebar {
     width: 225px;
@@ -23,7 +23,7 @@
   }
 
   &-main-content {
-    @include flex(1);
+    flex: 1;
   }
 
   ul {
@@ -78,7 +78,7 @@
     text-transform: capitalize;
 
     span {
-      background: $color-body-bg;
+      background: $body-bg;
       @include padding(null 0.5em);
     }
 
@@ -109,12 +109,12 @@
 }
 
 .color-variables {
-  @include display(flex);
-  @include flex-wrap(wrap);
+  display: flex;
+  flex-wrap: wrap;
 }
 
 .color-variable {
-  @include flex-shrink(0);
+  flex-shrink: 0;
   width: 240px;
   padding: 1rem;
 
