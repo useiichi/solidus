@@ -44,26 +44,10 @@ module Spree
     #
     # The +shipment_state+ value helps with reporting, etc. since it provides a quick and easy way to locate Orders needing attention.
     def update_shipment_state
-      if order.backordered?
-        order.shipment_state = 'backorder'
-      else
-        # get all the shipment states for this order
-        shipment_states = shipments.states
-        if shipment_states.size > 1
-          # multiple shiment states means it's most likely partially shipped
-          order.shipment_state = 'partial'
-        else
-          # will return nil if no shipments are found
-          order.shipment_state = shipment_states.first
-          # TODO: inventory unit states?
-          # if order.shipment_state && order.inventory_units.where(:shipment_id => nil).exists?
-          #   shipments exist but there are unassigned inventory units
-          #   order.shipment_state = 'partial'
-          # end
-        end
+      log_state_change('shipment') do
+        order.shipment_state = determine_shipment_state
       end
 
-      order.state_changed('shipment')
       order.shipment_state
     end
 
@@ -76,21 +60,45 @@ module Spree
     #
     # The +payment_state+ value helps with reporting, etc. since it provides a quick and easy way to locate Orders needing attention.
     def update_payment_state
-      last_state = order.payment_state
-      if payments.present? && payments.valid.size == 0 && order.outstanding_balance != 0
-        order.payment_state = 'failed'
-      elsif order.state == 'canceled' && order.payment_total == 0
-        order.payment_state = 'void'
-      else
-        order.payment_state = 'balance_due' if order.outstanding_balance > 0
-        order.payment_state = 'credit_owed' if order.outstanding_balance < 0
-        order.payment_state = 'paid' if !order.outstanding_balance?
+      log_state_change('payment') do
+        order.payment_state = determine_payment_state
       end
-      order.state_changed('payment') if last_state != order.payment_state
+
       order.payment_state
     end
 
     private
+
+    def determine_payment_state
+      if payments.present? && payments.valid.empty? && order.outstanding_balance != 0
+        'failed'
+      elsif order.state == 'canceled' && order.payment_total.zero?
+        'void'
+      elsif order.outstanding_balance > 0
+        'balance_due'
+      elsif order.outstanding_balance < 0
+        'credit_owed'
+      else
+        # outstanding_balance == 0
+        'paid'
+      end
+    end
+
+    def determine_shipment_state
+      if order.backordered?
+        'backorder'
+      else
+        # get all the shipment states for this order
+        shipment_states = shipments.states
+        if shipment_states.size > 1
+          # multiple shiment states means it's most likely partially shipped
+          'partial'
+        else
+          # will return nil if no shipments are found
+          shipment_states.first
+        end
+      end
+    end
 
     # This will update and select the best promotion adjustment, update tax
     # adjustments, update cancellation adjustments, and then update the total
@@ -133,7 +141,7 @@ module Spree
     # give each of the shipments a chance to update themselves
     def update_shipments
       shipments.each do |shipment|
-        shipment.update!(order)
+        shipment.update_state
       end
     end
 
@@ -177,6 +185,21 @@ module Spree
       order.save!(validate: false)
     end
 
+    def log_state_change(name)
+      state = "#{name}_state"
+      old_state = order.public_send(state)
+      yield
+      new_state = order.public_send(state)
+      if old_state != new_state
+        order.state_changes.new(
+          previous_state: old_state,
+          next_state:     new_state,
+          name:           name,
+          user_id:        order.user_id
+        )
+      end
+    end
+
     def round_money(n)
       (n * 100).round / 100.0
     end
@@ -185,7 +208,7 @@ module Spree
       [*line_items, *shipments].each do |item|
         promotion_adjustments = item.adjustments.select(&:promotion?)
 
-        promotion_adjustments.each(&:update!)
+        promotion_adjustments.each(&:recalculate)
         Spree::Config.promotion_chooser_class.new(promotion_adjustments).update
 
         item.promo_total = promotion_adjustments.select(&:eligible?).sum(&:amount)
@@ -198,7 +221,7 @@ module Spree
     # line items and/or shipments.
     def update_order_promotions
       promotion_adjustments = order.adjustments.select(&:promotion?)
-      promotion_adjustments.each(&:update!)
+      promotion_adjustments.each(&:recalculate)
       Spree::Config.promotion_chooser_class.new(promotion_adjustments).update
     end
 
@@ -221,7 +244,7 @@ module Spree
 
     def update_cancellations
       line_items.each do |line_item|
-        line_item.adjustments.select(&:cancellation?).each(&:update!)
+        line_item.adjustments.select(&:cancellation?).each(&:recalculate)
       end
     end
 
@@ -229,11 +252,10 @@ module Spree
       [*line_items, *shipments].each do |item|
         # The cancellation_total isn't persisted anywhere but is included in
         # the adjustment_total
-        item_cancellation_total = item.adjustments.select(&:cancellation?).sum(&:amount)
-
-        item.adjustment_total = item.promo_total +
-                                item.additional_tax_total +
-                                item_cancellation_total
+        item.adjustment_total = item.adjustments.
+          select(&:eligible?).
+          reject(&:included?).
+          sum(&:amount)
 
         if item.changed?
           item.update_columns(

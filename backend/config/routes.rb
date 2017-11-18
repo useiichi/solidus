@@ -22,10 +22,6 @@ Spree::Core::Engine.routes.draw do
 
     resources :zones
 
-    resources :countries do
-      resources :states
-    end
-    resources :states
     resources :tax_categories
 
     resources :products do
@@ -45,7 +41,7 @@ Spree::Core::Engine.routes.draw do
         end
       end
       member do
-        get :clone
+        post :clone
       end
       resources :variants do
         collection do

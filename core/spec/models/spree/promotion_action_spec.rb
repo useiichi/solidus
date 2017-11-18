@@ -1,6 +1,6 @@
-require 'spec_helper'
+require 'rails_helper'
 
-describe Spree::PromotionAction, type: :model do
+RSpec.describe Spree::PromotionAction, type: :model do
   describe '#remove_from' do
     class MyPromotionAction < Spree::PromotionAction
       def perform(options = {})
@@ -20,6 +20,10 @@ describe Spree::PromotionAction, type: :model do
     before do
       action.perform(order: order)
       @action_adjustment = order.adjustments.where(source: action).first!
+    end
+
+    it "generates its own partial path" do
+      expect(action.to_partial_path).to eq 'spree/admin/promotions/actions/my_promotion_action'
     end
 
     it 'removes the action adjustment' do

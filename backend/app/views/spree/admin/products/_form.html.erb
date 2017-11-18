@@ -32,7 +32,8 @@
       <div data-hook="admin_product_form_price">
         <%= f.field_container :price do %>
           <%= f.label :price, class: 'required' %>
-          <%= render "spree/admin/shared/number_with_currency", f: f, amount_attr: :price, currency: @product.find_or_build_master.default_price.currency %>
+          <%= render "spree/admin/shared/number_with_currency", f: f, amount_attr: :price,
+                     currency: Spree::Config.default_pricing_options.currency %>
           <%= f.error_message_on :price %>
         <% end %>
       </div>
@@ -120,7 +121,7 @@
         <%= f.field_container :shipping_categories do %>
           <%= f.label :shipping_category_id, Spree::ShippingCategory.model_name.human %>
           <%= f.field_hint :shipping_category %>
-          <%= f.collection_select(:shipping_category_id, @shipping_categories, :id, :name, { include_blank: Spree.t('match_choices.none') }, { class: 'select2' }) %>
+          <%= f.collection_select(:shipping_category_id, @shipping_categories, :id, :name, { include_blank: Spree.t('match_choices.none') }, { class: 'custom-select' }) %>
           <%= f.error_message_on :shipping_category %>
         <% end %>
       </div>
@@ -129,7 +130,7 @@
         <%= f.field_container :tax_category do %>
           <%= f.label :tax_category_id, Spree::TaxCategory.model_name.human %>
           <%= f.field_hint :tax_category %>
-          <%= f.collection_select(:tax_category_id, @tax_categories, :id, :name, { include_blank: Spree.t('match_choices.none') }, { class: 'select2' }) %>
+          <%= f.collection_select(:tax_category_id, @tax_categories, :id, :name, { include_blank: Spree.t('match_choices.none') }, { class: 'custom-select' }) %>
           <%= f.error_message_on :tax_category %>
         <% end %>
       </div>

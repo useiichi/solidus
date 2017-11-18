@@ -90,7 +90,7 @@ module Spree
             before_transition from: :cart, do: :ensure_line_items_present
 
             if states[:address]
-              before_transition to: :address, do: :assign_default_addresses!
+              before_transition to: :address, do: :assign_default_user_addresses
               before_transition from: :address, do: :persist_user_address!
             end
 
@@ -98,7 +98,7 @@ module Spree
               before_transition to: :delivery, do: :ensure_shipping_address
               before_transition to: :delivery, do: :create_proposed_shipments
               before_transition to: :delivery, do: :ensure_available_shipping_rates
-              before_transition from: :delivery, do: :apply_free_shipping_promotions
+              before_transition from: :delivery, do: :apply_shipping_promotions
             end
 
             before_transition to: :resumed, do: :ensure_line_item_variants_are_not_deleted
@@ -108,9 +108,6 @@ module Spree
             # calls matter so that we do not process payments
             # until validations have passed
             before_transition to: :complete, do: :validate_line_item_availability
-            if states[:delivery]
-              before_transition to: :complete, do: :ensure_available_shipping_rates
-            end
             before_transition to: :complete, do: :ensure_promotions_eligible
             before_transition to: :complete, do: :ensure_line_item_variants_are_not_deleted
             before_transition to: :complete, do: :ensure_inventory_units
@@ -123,7 +120,7 @@ module Spree
             after_transition to: :canceled, do: :after_cancel
 
             after_transition from: any - :cart, to: any - [:confirm, :complete] do |order|
-              order.update!
+              order.recalculate
             end
 
             after_transition do |order, transition|

@@ -1,6 +1,6 @@
-require 'spec_helper'
+require 'rails_helper'
 
-describe Spree::OrderShipping do
+RSpec.describe Spree::OrderShipping do
   let(:order) { create(:order_ready_to_ship, line_items_count: 1) }
 
   def emails
@@ -19,7 +19,11 @@ describe Spree::OrderShipping do
 
     describe "shipment email" do
       it "should send a shipment email" do
-        expect { subject }.to change { emails.size }.by(1)
+        expect {
+          perform_enqueued_jobs {
+            subject
+          }
+        }.to change { emails.size }.by(1)
         expect(emails.last.subject).to eq("#{order.store.name} Shipment Notification ##{order.number}")
       end
     end

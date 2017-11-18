@@ -9,11 +9,6 @@ describe Spree::Admin::OrdersController, type: :controller do
 
     before do
       request.env["HTTP_REFERER"] = "http://localhost:3000"
-
-      # ensure no respond_overrides are in effect
-      if Spree::BaseController.spree_responders[:OrdersController].present?
-        Spree::BaseController.spree_responders[:OrdersController].clear
-      end
     end
 
     let(:order) do
@@ -30,7 +25,7 @@ describe Spree::Admin::OrdersController, type: :controller do
     let(:adjustments) { double('adjustments') }
 
     before do
-      allow(Spree::Order).to receive_messages(find_by_number!: order)
+      allow(Spree::Order).to receive_message_chain(:includes, find_by!: order)
       allow(order).to receive_messages(contents: Spree::OrderContents.new(order))
     end
 
@@ -55,6 +50,17 @@ describe Spree::Admin::OrdersController, type: :controller do
         expect(order).to receive(:resume!)
         put :resume, params: { id: order.number }
         expect(flash[:success]).to eq Spree.t(:order_resumed)
+      end
+    end
+
+    context "#resend" do
+      let(:order) { create(:completed_order_with_totals) }
+      it "resends order email" do
+        mail_message = double "Mail::Message"
+        expect(Spree::OrderMailer).to receive(:confirm_email).with(order, true).and_return mail_message
+        expect(mail_message).to receive :deliver_later
+        post :resend, params: { id: order.number }
+        expect(flash[:success]).to eq Spree.t(:order_email_resent)
       end
     end
 
@@ -96,7 +102,7 @@ describe Spree::Admin::OrdersController, type: :controller do
 
       context "when a user_id is passed as a parameter" do
         let(:user)  { mock_model(Spree.user_class) }
-        before { allow(Spree.user_class).to receive_messages find_by_id: user }
+        before { allow(Spree.user_class).to receive_messages find_by: user }
 
         it "imports a new order and assigns the user to the order" do
           expect(Spree::Core::Importer::Order).to receive(:import)
@@ -113,6 +119,7 @@ describe Spree::Admin::OrdersController, type: :controller do
     end
 
     # Regression test for https://github.com/spree/spree/issues/3684
+    # Rendering a form should under no circumstance mutate the order
     context "#edit" do
       it "does not refresh rates if the order is completed" do
         allow(order).to receive_messages completed?: true
@@ -120,9 +127,9 @@ describe Spree::Admin::OrdersController, type: :controller do
         get :edit, params: { id: order.number }
       end
 
-      it "does refresh the rates if the order is incomplete" do
+      it "does not refresh the rates if the order is incomplete" do
         allow(order).to receive_messages completed?: false
-        expect(order).to receive :refresh_shipment_rates
+        expect(order).not_to receive :refresh_shipment_rates
         get :edit, params: { id: order.number }
       end
 

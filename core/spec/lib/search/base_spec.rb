@@ -1,6 +1,6 @@
-require 'spec_helper'
+require 'rails_helper'
 
-describe Spree::Core::Search::Base do
+RSpec.describe Spree::Core::Search::Base do
   before do
     include Spree::Core::ProductFilters
     @taxon = create(:taxon, name: "Ruby on Rails")
@@ -35,13 +35,15 @@ describe Spree::Core::Search::Base do
   it "switches to next page according to the page parameter" do
     @product3 = create(:product, name: "RoR Pants", price: 14.00)
 
-    params = { per_page: "2" }
-    searcher = Spree::Core::Search::Base.new(params)
-    expect(searcher.retrieve_products.count).to eq(2)
+    Spree::Deprecation.silence do
+      params = { per_page: "2" }
+      searcher = Spree::Core::Search::Base.new(params)
+      expect(searcher.retrieve_products.count).to eq(2)
 
-    params[:page] = "2"
-    searcher = Spree::Core::Search::Base.new(params)
-    expect(searcher.retrieve_products.count).to eq(1)
+      params[:page] = "2"
+      searcher = Spree::Core::Search::Base.new(params)
+      expect(searcher.retrieve_products.count).to eq(1)
+    end
   end
 
   it "maps search params to named scopes" do

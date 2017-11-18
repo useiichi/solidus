@@ -10,7 +10,7 @@
 //= require solidus_admin/underscore
 //= require solidus_admin/backbone
 //= require solidus_admin/backbone-nested-models
-//= require solidus_admin/tether
+//= require solidus_admin/popover
 //= require solidus_admin/bootstrap
 //= require prism
 //= require spree
@@ -32,11 +32,11 @@
 //= require spree/backend/components/number_with_currency
 //= require spree/backend/components/tabs
 //= require spree/backend/components/tooltips
+//= require spree/backend/components/editable_table
 //= require spree/backend/flash
 //= require spree/backend/gateway
 //= require spree/backend/handlebars_extensions
 //= require spree/backend/images/index
-//= require spree/backend/images/new
 //= require spree/backend/images/upload
 //= require spree/backend/navigation
 //= require spree/backend/number_field_updater
@@ -51,7 +51,6 @@
 //= require spree/backend/promotions/activation
 //= require spree/backend/returns/return_item_selection
 //= require spree/backend/routes
-//= require spree/backend/select_payments
 //= require spree/backend/shipments
 //= require spree/backend/spree-select2
 //= require spree/backend/states

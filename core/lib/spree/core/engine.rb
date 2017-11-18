@@ -10,7 +10,6 @@ module Spree
 
       initializer "spree.environment", before: :load_config_initializers do |app|
         app.config.spree = Spree::Core::Environment.new
-        Spree::Config = app.config.spree.preferences # legacy access
       end
 
       initializer "spree.default_permissions", before: :load_config_initializers do |_app|
@@ -43,8 +42,8 @@ module Spree
 
       initializer "spree.register.payment_methods", before: :load_config_initializers do |app|
         app.config.spree.payment_methods = %w[
-          Spree::Gateway::Bogus
-          Spree::Gateway::BogusSimple
+          Spree::PaymentMethod::BogusCreditCard
+          Spree::PaymentMethod::SimpleBogusCreditCard
           Spree::PaymentMethod::StoreCredit
           Spree::PaymentMethod::Check
         ]
@@ -67,9 +66,10 @@ module Spree
         ]
 
         app.config.spree.calculators.promotion_actions_create_item_adjustments = %w[
-          Spree::Calculator::PercentOnLineItem
+          Spree::Calculator::DistributedAmount
           Spree::Calculator::FlatRate
           Spree::Calculator::FlexiRate
+          Spree::Calculator::PercentOnLineItem
           Spree::Calculator::TieredPercent
         ]
 
@@ -100,6 +100,12 @@ module Spree
           Spree::Promotion::Actions::CreateAdjustment
           Spree::Promotion::Actions::CreateItemAdjustments
           Spree::Promotion::Actions::CreateQuantityAdjustments
+          Spree::Promotion::Actions::FreeShipping
+        ]
+      end
+
+      initializer 'spree.promo.register.promotions.shipping_actions', before: :load_config_initializers do |app|
+        app.config.spree.promotions.shipping_actions = %w[
           Spree::Promotion::Actions::FreeShipping
         ]
       end

@@ -1,6 +1,6 @@
 .date-range-filter {
   .range-divider {
-    color: $gray;
+    color: $gray-800;
   }
 }
 
@@ -46,7 +46,6 @@
       }
 
       .ui-icon {
-        @extend [class^="icon-"]:before;
         @extend .fa;
 
         background-image: none;

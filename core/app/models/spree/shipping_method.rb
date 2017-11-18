@@ -16,7 +16,7 @@ module Spree
     has_many :shipments, through: :shipping_rates
     has_many :cartons, inverse_of: :shipping_method
 
-    has_many :shipping_method_zones
+    has_many :shipping_method_zones, dependent: :destroy
     has_many :zones, through: :shipping_method_zones
 
     belongs_to :tax_category, -> { with_deleted }, class_name: 'Spree::TaxCategory'
@@ -36,10 +36,12 @@ module Spree
       # cause this to return incorrect results.
       join_table = Spree::ShippingMethodCategory.arel_table
       having = join_table[:id].count(true).eq(shipping_category_ids.count)
-      joins(:shipping_method_categories).
+      subquery = joins(:shipping_method_categories).
         where(spree_shipping_method_categories: { shipping_category_id: shipping_category_ids }).
         group('spree_shipping_methods.id').
         having(having)
+
+      where(id: subquery.select(:id))
     end
 
     # @param stock_location [Spree::StockLocation] stock location

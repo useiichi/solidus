@@ -10,7 +10,7 @@ module Spree
                             :taxons]
     REPORT_TABS        ||= [:reports]
     CONFIGURATION_TABS ||= [:stores, :tax_categories,
-                            :tax_rates, :zones, :countries, :states,
+                            :tax_rates, :zones,
                             :payment_methods, :shipping_methods,
                             :shipping_categories, :stock_locations,
                             :refund_reasons, :reimbursement_types, :return_authorization_reasons]
@@ -98,6 +98,7 @@ module Spree
         MenuItem.new(
           PROMOTION_TABS,
           'bullhorn',
+          partial: 'spree/admin/shared/promotion_sub_menu',
           condition: -> { can?(:admin, Spree::Promotion) },
           url: :admin_promotions_path
         ),

@@ -7,12 +7,12 @@
         <%= label_tag field_name, Spree::Calculator.model_name.human %>
         <%= select_tag field_name,
                       options_from_collection_for_select(calculators, :to_s, :description, promotion_action.calculator.type),
-                      class: 'type-select js-calculator-type select2 fullwidth' %>
+                      class: 'type-select js-calculator-type custom-select fullwidth' %>
       </div>
     </div>
 
     <div class="col-6">
-      <div class="settings field">
+      <div class="settings">
         <% calculators.each do |calculator_class| %>
           <% calculator = promotion_action.calculator.class == calculator_class ? promotion_action.calculator : calculator_class.new %>
           <div class="js-calculator-preferences" data-calculator-type="<%= calculator_class %>">

@@ -5,7 +5,7 @@ require 'spree/testing_support/factories/tax_rate_factory'
 require 'spree/testing_support/factories/zone_factory'
 
 FactoryGirl.define do
-  factory :adjustment, class: Spree::Adjustment do
+  factory :adjustment, class: 'Spree::Adjustment' do
     order
     adjustable { order }
     amount 100.0
@@ -29,9 +29,13 @@ FactoryGirl.define do
       after(:create) do |adjustment|
         # Set correct tax category, so that adjustment amount is not 0
         if adjustment.adjustable.is_a?(Spree::LineItem)
-          adjustment.source.tax_category = adjustment.adjustable.tax_category
+          if adjustment.adjustable.tax_category.present?
+            adjustment.source.tax_categories = [adjustment.adjustable.tax_category]
+          else
+            adjustment.source.tax_categories = []
+          end
           adjustment.source.save
-          adjustment.update!
+          adjustment.recalculate
         end
       end
     end

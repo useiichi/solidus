@@ -1,6 +1,6 @@
-require 'spec_helper'
+require 'rails_helper'
 
-describe Spree::Order, type: :model do
+RSpec.describe Spree::Order, type: :model do
   let(:order) { create(:order) }
 
   context "#update!" do
@@ -9,7 +9,7 @@ describe Spree::Order, type: :model do
       after { Spree::Order.update_hooks.clear }
       it "should call each of the update hooks" do
         expect(order).to receive :foo
-        order.update!
+        order.recalculate
       end
     end
   end

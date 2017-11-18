@@ -1,6 +1,6 @@
-require 'spec_helper'
+require 'rails_helper'
 
-describe Spree::Core::ControllerHelpers::PaymentParameters, type: :controller do
+RSpec.describe Spree::Core::ControllerHelpers::PaymentParameters, type: :controller do
   controller(ApplicationController) do
     include Spree::Core::ControllerHelpers::PaymentParameters
   end
@@ -11,7 +11,6 @@ describe Spree::Core::ControllerHelpers::PaymentParameters, type: :controller do
     it "is unpermitted ActionController::Parameters" do
       expect(subject).to be_a(ActionController::Parameters)
       expect(subject).not_to be_permitted
-      expect(subject.to_h).to eq({})
     end
   end
 

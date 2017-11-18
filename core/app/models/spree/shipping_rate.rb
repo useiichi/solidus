@@ -3,7 +3,7 @@ module Spree
   # method has been selected to deliver the shipment.
   #
   class ShippingRate < Spree::Base
-    belongs_to :shipment, class_name: 'Spree::Shipment'
+    belongs_to :shipment, class_name: 'Spree::Shipment', touch: true
     belongs_to :shipping_method, -> { with_deleted }, class_name: 'Spree::ShippingMethod', inverse_of: :shipping_rates
 
     has_many :taxes,
@@ -17,6 +17,8 @@ module Spree
     alias_attribute :amount, :cost
 
     alias_method :discounted_amount, :amount
+    deprecate discounted_amount: :total_before_tax, deprecator: Spree::Deprecation
+    alias_method :total_before_tax, :amount
 
     extend DisplayMoney
     money_methods :amount

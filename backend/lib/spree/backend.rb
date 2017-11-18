@@ -6,11 +6,12 @@ require 'sass-rails'
 require 'bourbon'
 require 'handlebars_assets'
 require 'font-awesome-rails'
+require 'autoprefixer-rails'
+require 'jbuilder'
 
 require 'spree_core'
 require 'spree_api'
 
-require 'spree/responder'
 require 'spree/backend/action_callbacks'
 require 'spree/backend/callbacks'
 require 'spree/backend/engine'

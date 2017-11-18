@@ -21,7 +21,7 @@
         <div class="field-block col-3">
           <div class="field">
             <%= f.label nil, Spree::StockLocation.model_name.human %>
-            <%= f.select :source_location_id_or_destination_location_id_eq, options_from_collection_for_select(@stock_locations, :id, :name, params[:q][:source_location_id_or_destination_location_id_eq]), {include_blank: true}, {class: 'select2 fullwidth'} %>
+            <%= f.select :source_location_id_or_destination_location_id_eq, options_from_collection_for_select(@stock_locations, :id, :name, params[:q][:source_location_id_or_destination_location_id_eq]), {include_blank: true}, {class: 'custom-select fullwidth'} %>
           </div>
         </div>
 
@@ -87,21 +87,25 @@
     </thead>
     <tbody>
       <% @stock_transfers.each do |stock_transfer| %>
-        <tr id="<%= spree_dom_id stock_transfer %>" class="<%= cycle('odd', 'even') %>">
+        <tr id="<%= spree_dom_id stock_transfer %>">
           <td><%= handle_stock_transfer(stock_transfer) %></td>
           <td><%= stock_transfer.source_location.name %></td>
           <td><%= stock_transfer.destination_location.try(:name) %></td>
-          <td class="align-center"><%= stock_transfer.expected_item_count %></td>
-          <td class="align-center"><%= stock_transfer.received_item_count %></td>
+          <td><%= stock_transfer.expected_item_count %></td>
+          <td><%= stock_transfer.received_item_count %></td>
           <td><%= stock_transfer.shipped_at.try(:to_date) %></td>
-          <td><%= stock_transfer_status(stock_transfer) %></td>
+          <td>
+            <span class="pill pill-<%= stock_transfer.closed? ? 'complete' : 'pending' %>">
+              <%= Spree.t(stock_transfer.closed? ? :closed : :open) %>
+            </span>
+          </td>
           <td class="actions">
             <% if stock_transfer.receivable? && can?(:edit, stock_transfer) %>
-              <%= link_to_with_icon 'download', Spree.t('actions.receive'), receive_admin_stock_transfer_path(stock_transfer), no_text: true, data: { action: 'green' } %>
+              <%= link_to_with_icon 'download', Spree.t('actions.receive'), receive_admin_stock_transfer_path(stock_transfer), no_text: true, data: { action: 'receive' } %>
             <% elsif !stock_transfer.closed? && can?(:edit, stock_transfer) %>
               <%= link_to_with_icon 'edit', Spree.t('actions.edit'), stock_transfer_edit_or_ship_path(stock_transfer), no_text: true, data: { action: 'edit' } %>
             <% elsif can?(:show, stock_transfer) %>
-              <%= link_to_with_icon 'eye', Spree.t(:show), admin_stock_transfer_path(stock_transfer), no_text: true, data: { action: 'green' } %>
+              <%= link_to_with_icon 'eye', Spree.t(:show), admin_stock_transfer_path(stock_transfer), no_text: true, data: { action: 'show' } %>
             <% end %>
           </td>
         </tr>

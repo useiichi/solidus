@@ -6,6 +6,16 @@ en:
         state: State
         shipment: Shipment
         cancel: Cancel
+    errors:
+      models:
+        spree/fulfilment_changer:
+          attributes:
+            desired_shipment:
+              can_not_transfer_within_same_shipment: can not be same as current shipment
+              not_enough_stock_at_desired_location: not enough stock in desired stock location
+            current_shipment:
+              has_already_been_shipped: has already been shipped
+              can_not_have_backordered_inventory_units: has backordered inventory units
   activerecord:
     attributes:
       spree/address:
@@ -33,9 +43,11 @@ en:
         preferred_amount: Amount
       spree/calculator/tiered_flat_rate:
         preferred_base_amount: Base Amount
+        preferred_currency: Currency
         preferred_tiers: Tiers
       spree/calculator/tiered_percent:
         preferred_base_percent: Base Percent
+        preferred_currency: Currency
         preferred_tiers: Tiers
       spree/carton:
         tracking: Tracking
@@ -60,6 +72,7 @@ en:
         number: Return Number
         pre_tax_total: Pre-Tax Total
         total: Total
+        total_excluding_vat: Pre-Tax Total
         created_at: "Date/Time"
         reimbursement_status: Reimbursement status
         name: Name
@@ -72,6 +85,7 @@ en:
         email: Email
         password: Password
         password_confirmation: Password Confirmation
+        spree_roles: Roles
       spree/line_item:
         description: Item Description
         name: Name
@@ -135,7 +149,7 @@ en:
         display_on: Display
         name: Name
         preference_source: Preference Source
-        type: Provider
+        type: Type
       spree/price:
         currency: Currency
         amount: Price
@@ -168,13 +182,48 @@ en:
         code: Code
         description: Description
         event_name: Event Name
-        expires_at: Expiration date
+        expires_at: End
         name: Name
         path: Path
         per_code_usage_limit: Per Code Usage Limit
         promotion_uses: Promotion Uses
-        starts_at: Start date
-        usage_limit: Overall Usage Limit
+        starts_at: Start
+        status: Status
+        usage_limit: Usage Limit
+      spree/promotion/actions/create_adjustment:
+        description: Creates a promotion credit adjustment on the order
+      spree/promotion/actions/create_item_adjustments:
+        description: Creates a promotion credit adjustment on a line item
+      spree/promotion/actions/create_quantity_adjustments:
+        description: Creates an adjustment on a line item based on quantity
+      spree/promotion/actions/free_shipping:
+        description: Makes all shipments for the order free
+      spree/promotion/rules/item_total:
+        description: Order total meets these criteria
+      spree/promotion/rules/first_order:
+        description: Must be the customer's first order
+      spree/promotion/rules/landing_page:
+          description: Customer must have visited the specified page
+      spree/promotion/rules/one_use_per_user:
+        description: Only One Use Per User
+      spree/promotion/rules/option_value:
+        description: Order includes specified product(s) with matching option value(s)
+      spree/promotion/rules/product:
+        description: Order includes specified product(s)
+      spree/promotion/rules/user:
+        description: Available only to the specified users
+      spree/promotion/rules/user_logged_in:
+        description: Available only to logged in users
+      spree/promotion/rules/taxon:
+        description: Order includes products with specified taxon(s)
+      spree/promotion/rules/nth_order:
+        description: Apply a promotion to every nth order a user has completed.
+        form_text: "Apply this promotion on the users Nth order: "
+      spree/promotion/rules/first_repeat_purchase_since:
+        description: Available only to user who have not purchased in a while
+        form_text: "Apply this promotion to users whose last order was more than X days ago: "
+      spree/promotion/rules/user_role:
+        description: Order includes User with specified Role(s)
       spree/promotion_category:
         name: Name
       spree/property:
@@ -202,6 +251,7 @@ en:
       spree/return_authorization:
         amount: Amount
         pre_tax_total: Pre-Tax Total
+        total_excluding_vat: Pre-Tax Total
       spree/return_item:
         acceptance_status: Acceptance status
         acceptance_status_errors: Acceptance errors
@@ -313,6 +363,8 @@ en:
         included_in_price: Included In Price
         name: Name
         show_rate_in_label: Show Rate In Label
+        starts_at: Start date
+        expires_at: Expiration date
       spree/taxon:
         description: Description
         icon: Icon
@@ -331,6 +383,8 @@ en:
         email: Email
         password: Password
         password_confirmation: Password Confirmation
+        spree_roles: Roles
+        lifetime_value: Total spent
       spree/variant:
         cost_currency: Cost Currency
         cost_price: Cost Price
@@ -344,7 +398,6 @@ en:
       spree/zone:
         description: Description
         name: Name
-        default_tax: Default Tax Zone
     models:
       # LegacyUser maps to this model_name so we want to provide translations for it
       user:
@@ -365,6 +418,9 @@ en:
       spree/calculator/default_tax:
         one: Default Tax
         other: Default Tax
+      spree/calculator/distributed_amount:
+        one: Distributed Amount
+        other: Distributed Amount
       spree/calculator/flat_percent_item_total:
         one: Flat Percent
         other: Flat Percent
@@ -455,6 +511,10 @@ en:
       spree/payment_method:
         one: Payment Method
         other: Payment Methods
+      spree/payment_method/check: Check Payments
+      spree/payment_method/store_credit: Store Credit Payments
+      spree/payment_method/bogus_credit_card: Bogus Credit Card Payments
+      spree/payment_method/simple_bogus_credit_card: Simple Bogus Credit Card Payments
       spree/price:
         one: Price
         other: Prices
@@ -467,6 +527,22 @@ en:
       spree/promotion:
         one: Promotion
         other: Promotions
+      spree/promotion/actions/create_adjustment: Create whole-order adjustment
+      spree/promotion/actions/create_item_adjustments: Create per-line-item adjustment
+      spree/promotion/actions/create_quantity_adjustments: Create per-quantity adjustment
+      spree/promotion/actions/free_shipping: Free shipping
+      spree/promotion/rules/first_order: First order
+      spree/promotion/rules/item_total: Item total
+      spree/promotion/rules/landing_page: Landing Page
+      spree/promotion/rules/one_use_per_user: One Use Per User
+      spree/promotion/rules/option_value: Option Value(s)
+      spree/promotion/rules/product: Product(s)
+      spree/promotion/rules/user: User
+      spree/promotion/rules/user_logged_in: User Logged In
+      spree/promotion/rules/taxon: Taxon(s)
+      spree/promotion/rules/nth_order: Nth Order
+      spree/promotion/rules/first_repeat_purchase_since: First Repeat Purchase Since
+      spree/promotion/rules/user_role: User Role(s)
       spree/promotion_category:
         one: Promotion Category
         other: Promotion Categories
@@ -748,10 +824,6 @@ en:
         vat: '%{name} (Included in Price)'
         sales_tax_with_rate: '%{name} %{amount}'
         vat_with_rate: '%{name} %{amount} (Included in Price)'
-        sales_tax_refund: 'Refund: %{name}'
-        vat_refund: 'Refund: %{name} (Included in Price)'
-        sales_tax_refund_with_rate: 'Refund: %{name} %{amount}'
-        vat_refund_with_rate: 'Refund: %{name} %{amount} (Included in Price)'
     adjustment_reasons: Adjustment Reasons
     adjustment_successfully_closed: Adjustment has been successfully closed!
     adjustment_successfully_opened: Adjustment has been successfully opened!
@@ -838,7 +910,6 @@ en:
           amount_used_not_zero: "is greater than zero. Can not delete store credit"
           update_reason_required: "A reason for the change must be selected"
       tab:
-        areas: Locations
         checkout: Refunds and Returns
         configuration: Configuration
         display_order: Display Order
@@ -862,6 +933,7 @@ en:
         taxonomies: Taxonomies
         taxons: Taxons
         users: Users
+        zones: Zones
       taxons:
         display_order: Display Order
       user:
@@ -910,7 +982,7 @@ en:
     analytics_trackers: Analytics Trackers
     and: and
     apply_code: Apply Code
-    approve: approve
+    approve: Approve
     approver: Approver
     approved_at: Approved at
     are_you_sure: Are you sure?
@@ -974,7 +1046,7 @@ en:
     calculated_reimbursements: Calculated Reimbursements
     calculator: Calculator
     calculator_settings_warning: If you are changing the calculator type or preference source, you must save first before you can edit the calculator settings
-    cancel: cancel
+    cancel: Cancel
     cancel_inventory: 'Cancel Items'
     canceled: canceled
     canceled_at: Canceled at
@@ -1017,6 +1089,7 @@ en:
     clear_cache_warning: Clearing cache will temporarily reduce the performance of your store.
     clone: Clone
     close: Close
+    closed: Closed
     close_stock_transfer:
       confirm: "Are you sure you want to close this stock transfer?\n\nStock levels will be changed for the received items and you will no longer be able to edit the stock transfer."
     code: Code
@@ -1101,8 +1174,6 @@ en:
     date_range: Date Range
     default: Default
     default_refund_amount: Default Refund Amount
-    default_tax: Default Tax
-    default_tax_zone: Default Tax Zone
     delete: Delete
     deleted_variants_present: Some line items in this order have products that are no longer available.
     deleted_successfully: Deleted successfully
@@ -1211,7 +1282,7 @@ en:
         tax_category: "This determines what kind of taxation is applied to this product.<br/> Default: None"
       spree/promotion:
         starts_at: "This determines when the promotion can be applied to orders. <br/> If no value is specified, the promotion will be immediately available."
-        expires_at: "This determines when the promotion expires. <br/> If no value is specified, the promotion will never expires."
+        expires_at: "This determines when the promotion expires. <br/> If no value is specified, the promotion will never expire."
       spree/store:
         cart_tax_country_iso: "This determines which country is used for taxes on carts (orders which don't yet have an address).<br/> Default: None."
       spree/variant:
@@ -1219,6 +1290,8 @@ en:
         deleted: "Deleted Variant"
         deleted_explanation: "This variant was deleted on %{date}."
         deleted_explanation_with_replacement: "This variant was deleted on %{date}. It has since been replaced by another with the same SKU."
+      spree/tax_rate:
+        validity_period: "This determines the validity period within which the tax rate is valid and will be applied to eligible items. <br /> If no start date value is specified, the tax rate will be immediately available. <br /> If no expiration date value is specified, the tax rate will never expire"
     failed_payment_attempts: Failed Payment Attempts
     failure: Failure
     filename: Filename
@@ -1298,22 +1371,22 @@ en:
     intercept_email_instructions: Override email recipient and replace with this address.
     internal_name: Internal Name
     invalid_exchange_variant: Invalid exchange variant.
-    invalid_payment_provider: Invalid payment provider.
+    invalid_payment_method_type: Invalid payment method type.
     invalid_promotion_action: Invalid promotion action.
     invalid_promotion_rule: Invalid promotion rule.
     invalidate: Invalidate
     inventory: Inventory
     inventory_adjustment: Inventory Adjustment
     inventory_canceled: Inventory canceled
-    inventory_error_flash_for_insufficient_quantity: "#{names} became unavailable."
+    inventory_error_flash_for_insufficient_quantity: "%{names} became unavailable."
     inventory_not_available: Inventory not available for %{item}.
     inventory_state: Inventory State
     inventory_states:
-      backordered: backordered
-      canceled: canceled
-      on_hand: on hand
-      returned: returned
-      shipped: shipped
+      backordered: Backordered
+      canceled: Canceled
+      on_hand: On hand
+      returned: Returned
+      shipped: Shipped
     is_not_available_to_shipment_address: is not available to shipment address
     iso_name: Iso Name
     item: Item
@@ -1518,16 +1591,16 @@ en:
     order_refresh_totals: Refresh Totals
     order_resumed: Order resumed
     order_state:
-      address: address
-      awaiting_return: awaiting return
-      canceled: canceled
-      cart: cart
-      complete: complete
-      confirm: confirm
-      delivery: delivery
-      payment: payment
-      resumed: resumed
-      returned: returned
+      address: Address
+      awaiting_return: Awaiting return
+      canceled: Canceled
+      cart: Cart
+      complete: Complete
+      confirm: Confirm
+      delivery: Delivery
+      payment: Payment
+      resumed: Resumed
+      returned: Returned
     order_summary: Order Summary
     order_sure_want_to: Are you sure you want to %{event} this order?
     order_total: Order Total
@@ -1561,15 +1634,16 @@ en:
     payment_processor_choose_link: our payments page
     payment_state: Payment State
     payment_states:
-      balance_due: balance due
-      checkout: checkout
-      completed: completed
-      credit_owed: credit owed
-      failed: failed
-      paid: paid
-      pending: pending
-      processing: processing
-      void: void
+      balance_due: Balance due
+      checkout: Checkout
+      completed: Completed
+      credit_owed: Credit owed
+      failed: Failed
+      paid: Paid
+      pending: Pending
+      processing: Processing
+      void: Void
+      invalid: Invalid
     payment_updated: Payment Updated
     payments: Payments
     percent: Percent
@@ -1612,19 +1686,6 @@ en:
     promotion: Promotion
     promotionable: Promotable
     promotion_action: Promotion Action
-    promotion_action_types:
-      create_adjustment:
-        description: Creates a promotion credit adjustment on the order
-        name: Create whole-order adjustment
-      create_item_adjustments:
-        description: Creates a promotion credit adjustment on a line item
-        name: Create per-line-item adjustment
-      create_quantity_adjustments:
-        description: Creates an adjustment on a line item based on quantity
-        name: Create per-quantity adjustment
-      free_shipping:
-        description: Makes all shipments for the order free
-        name: Free shipping
     promotion_actions: Actions
     promotion_code_batch_mailer:
       promotion_code_batch_finished:
@@ -1642,45 +1703,6 @@ en:
         all: Match all of these rules
         any: Match any of these rules
     promotion_rule: Promotion Rule
-    promotion_rule_types:
-      first_order:
-        description: Must be the customer's first order
-        name: First order
-      item_total:
-        description: Order total meets these criteria
-        name: Item total
-      landing_page:
-        description: Customer must have visited the specified page
-        name: Landing Page
-      one_use_per_user:
-        description: Only One Use Per User
-        name: One Use Per User
-      option_value:
-        description: Order includes specified product(s) with matching option value(s)
-        name: Option Value(s)
-      product:
-        description: Order includes specified product(s)
-        name: Product(s)
-      user:
-        description: Available only to the specified users
-        name: User
-      user_logged_in:
-        description: Available only to logged in users
-        name: User Logged In
-      taxon:
-        description: Order includes products with specified taxon(s)
-        name: Taxon(s)
-      nth_order:
-        description: Apply a promotion to every nth order a user has completed.
-        name: Nth Order
-        form_text: "Apply this promotion on the users Nth order: "
-      first_repeat_purchase_since:
-        description: Available only to user who have not purchased in a while
-        name: First Repeat Purchase Since
-        form_text: "Apply this promotion to users whose last order was more than X days ago: "
-      user_role:
-        description: Order includes User with specified Role(s)
-        name: User Role(s)
     promotions: Promotions
     promotion_successfully_created: Promotion has been successfully created!
     promotion_total_changed_before_complete: "One or more of the promotions on your order have become ineligible and were removed. Please check the new order amounts and try again."
@@ -1689,7 +1711,7 @@ en:
     properties: Property Types
     property: Property Type
     provider: Provider
-    provider_settings_warning: If you are changing the provider type, you must save first before you can edit the provider settings
+    payment_method_settings_warning: If you are changing the payment method type, you must save first before you can edit the payment method settings
     qty: Qty
     quantity: Quantity
     quantity_returned: Quantity Returned
@@ -1704,6 +1726,17 @@ en:
     received_successfully: Received Successfully
     receiving: Receiving
     receiving_match: Receiving match
+    reception_states:
+      awaiting: Awaiting
+      canceled: Canceled
+      expired: Expired
+      given_to_customer: Given to customer
+      in_transit: In transit
+      lost_in_transit: Lost in transit
+      received: Received
+      shipped_wrong_item: Wrong item
+      short_shipped: Short shipped
+      unexchanged: Unexchanged
     reception_status: Reception Status
     reference: Reference
     refund: Refund
@@ -1718,6 +1751,10 @@ en:
     reimbursed: Reimbursed
     reimbursement: Reimbursement
     reimbursement_perform_failed: "Reimbursement could not be performed.  Error: %{error}"
+    reimbursement_states:
+      errored: Errored
+      pending: Pending
+      reimbursed: Reimbursed
     reimbursement_status: Reimbursement status
     reimbursement_type: Reimbursement type
     reimbursement_type_override: Reimbursement Type Override
@@ -1733,10 +1770,13 @@ en:
     reset_password: Reset my password
     response_code: Response Code
     restock_inventory: Restock Inventory
-    resume: resume
+    resume: Resume
     resumed: Resumed
     return: return
     return_authorization: Return Merchandise Authorization
+    return_authorization_states:
+      authorized: Authorized
+      canceled: Canceled
     return_authorizations: Return Merchandise Authorizations
     return_authorization_updated: Return merchandise authorization updated
     return_item_inventory_unit_ineligible: Return item's inventory unit must be shipped
@@ -1818,12 +1858,12 @@ en:
     shipment_numbers: Shipment numbers
     shipment_state: Shipment State
     shipment_states:
-      backorder: backorder
-      canceled: canceled
-      partial: partial
-      pending: pending
-      ready: ready
-      shipped: shipped
+      backorder: Backorder
+      canceled: Canceled
+      partial: Partial
+      pending: Pending
+      ready: Ready
+      shipped: Shipped
     shipment_transfer_success: 'Variants successfully transferred'
     shipment_transfer_error: 'There was an error transferring variants'
     shipments: Shipments
@@ -1847,7 +1887,6 @@ en:
       label:
         sales_tax: "+ %{amount} %{tax_rate_name}"
         vat: "incl. %{amount} %{tax_rate_name}"
-        vat_refund: "excl. %{amount} %{tax_rate_name}"
     shipping_total: Shipping total
     shop_by_taxonomy: Shop by %{taxonomy}
     shopping_cart: Shopping Cart
@@ -1865,6 +1904,7 @@ en:
     source_location: Source location
     special_instructions: Special Instructions
     split: Split
+    split_failed: Unable to complete split
     spree_gateway_error_flash_for_checkout: There was a problem with your payment information. Please check your information and try again.
     ssl:
       change_protocol: "Please switch to using HTTP (rather than HTTPS) and retry this request."
@@ -1872,6 +1912,9 @@ en:
     state: State
     state_based: State Based
     states: States
+    states_count:
+      one: "%{count} State"
+      other: "%{count} States"
     states_required: States Required
     status: Status
     stock_location: Stock Location
@@ -1976,6 +2019,7 @@ en:
     to: to
     to_add_variants_you_must_first_define: To add variants, you must first define
     total: Total
+    total_excluding_vat: Pre-Tax Total
     total_per_item: Total per item
     total_pre_tax_refund: Total Pre-Tax Refund
     total_price: Total price
@@ -2031,6 +2075,7 @@ en:
       is_too_large: is too large -- stock on hand cannot cover requested quantity!
       must_be_int: must be an integer
       must_be_non_negative: must be a non-negative value
+    validity_period: Validity Period
     value: Value
     variant: Variant
     variant_placeholder: Choose a variant

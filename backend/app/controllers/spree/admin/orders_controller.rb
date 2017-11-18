@@ -69,23 +69,16 @@ module Spree
       end
 
       def new
-        user = Spree.user_class.find_by_id(params[:user_id]) if params[:user_id]
+        user = Spree.user_class.find_by(id: params[:user_id]) if params[:user_id]
         @order = Spree::Core::Importer::Order.import(user, order_params)
         redirect_to cart_admin_order_url(@order)
       end
 
       def edit
         require_ship_address
-
-        unless @order.completed?
-          @order.refresh_shipment_rates
-        end
       end
 
       def cart
-        unless @order.completed?
-          @order.refresh_shipment_rates
-        end
         if @order.shipped_shipments.count > 0
           redirect_to edit_admin_order_url(@order)
         end
@@ -145,7 +138,7 @@ module Spree
       end
 
       def resend
-        OrderMailer.confirm_email(@order.id, true).deliver_later
+        OrderMailer.confirm_email(@order, true).deliver_later
         flash[:success] = Spree.t(:order_email_resent)
 
         redirect_to(spree.edit_admin_order_path(@order))
@@ -178,7 +171,7 @@ module Spree
       end
 
       def load_order
-        @order = Spree::Order.includes(:adjustments).find_by_number!(params[:id])
+        @order = Spree::Order.includes(:adjustments).find_by!(number: params[:id])
         authorize! action, @order
       end
 

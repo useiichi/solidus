@@ -1,10 +1,10 @@
-require 'spec_helper'
+require 'rails_helper'
 
 class FakesController < ApplicationController
   include Spree::Core::ControllerHelpers::Pricing
 end
 
-describe Spree::Core::ControllerHelpers::Pricing, type: :controller do
+RSpec.describe Spree::Core::ControllerHelpers::Pricing, type: :controller do
   controller(FakesController) {}
 
   before do
