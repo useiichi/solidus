@@ -149,12 +149,12 @@ RSpec.describe Spree::StockItem, type: :model do
     before { Spree::StockMovement.create(stock_item: subject, quantity: 1) }
 
     it "doesnt raise ReadOnlyRecord error" do
-      subject.destroy
+      subject.discard
     end
   end
 
   context "destroyed" do
-    before { subject.destroy }
+    before { subject.discard }
 
     it "recreates stock item just fine" do
       stock_location.stock_items.create!(variant: subject.variant)
@@ -277,8 +277,8 @@ RSpec.describe Spree::StockItem, type: :model do
 
   # Regression test for https://github.com/spree/spree/issues/4651
   context "variant" do
-    it "can be found even if the variant is deleted" do
-      subject.variant.destroy
+    it "can be found even if the variant is soft-deleted" do
+      subject.variant.discard
       expect(subject.reload.variant).not_to be_nil
     end
   end
@@ -293,14 +293,14 @@ RSpec.describe Spree::StockItem, type: :model do
       shared_examples_for 'valid count_on_hand' do
         it 'has :no errors_on' do
           expect(subject).to be_valid
-          expect(subject.errors_on(:count_on_hand).size).to eq(0)
+          expect(subject.errors[:count_on_hand].size).to eq(0)
         end
       end
 
       shared_examples_for 'invalid count_on_hand' do
         it 'has the correct error on count_on_hand' do
           expect(subject).not_to be_valid
-          expect(subject.error_on(:count_on_hand).size).to eq(1)
+          expect(subject.errors[:count_on_hand].size).to eq(1)
           expect(subject.errors[:count_on_hand]).to include('must be greater than or equal to 0')
         end
       end

@@ -20,6 +20,10 @@ RSpec.describe Spree::BaseHelper, type: :helper do
       it "return complete list of countries" do
         expect(available_countries.count).to eq(Spree::Country.count)
       end
+
+      it "uses locales for country names" do
+        expect(available_countries).to include(having_attributes(name: "United States of America"))
+      end
     end
 
     context "with a checkout zone defined" do
@@ -122,9 +126,21 @@ RSpec.describe Spree::BaseHelper, type: :helper do
     end
   end
 
-  context "pretty_time" do
-    it "prints in a format" do
-      expect(pretty_time(DateTime.new(2012, 5, 6, 13, 33))).to eq "May 06, 2012  1:33 PM"
+  describe "#pretty_time" do
+    subject { pretty_time(date) }
+
+    let(:date) { Time.new(2012, 11, 6, 13, 33) }
+
+    it "pretty prints time in long format" do
+      is_expected.to eq "November 06, 2012 1:33 PM"
+    end
+
+    context 'with format set to short' do
+      subject { pretty_time(date, :short) }
+
+      it "pretty prints time in short format" do
+        is_expected.to eq "Nov 6 '12 1:33pm"
+      end
     end
   end
 

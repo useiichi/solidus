@@ -1,9 +1,16 @@
+require 'discard'
+
 module Spree
   class TaxRate < Spree::Base
     acts_as_paranoid
+    include Spree::ParanoiaDeprecations
+
+    include Discard::Model
+    self.discard_column = :deleted_at
 
     # Need to deal with adjustments before calculator is destroyed.
-    before_destroy :deals_with_adjustments_for_deleted_source
+    before_destroy :remove_adjustments_from_incomplete_orders
+    before_discard :remove_adjustments_from_incomplete_orders
 
     include Spree::CalculatedAdjustments
     include Spree::AdjustmentSource
@@ -102,9 +109,9 @@ module Spree
     end
 
     def adjustment_label(amount)
-      Spree.t(
+      I18n.t(
         translation_key(amount),
-        scope: "adjustment_labels.tax_rates",
+        scope: "spree.adjustment_labels.tax_rates",
         name: name.presence || tax_categories.map(&:name).join(", "),
         amount: amount_for_adjustment_label
       )

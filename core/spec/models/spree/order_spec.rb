@@ -5,7 +5,7 @@ RSpec.describe Spree::Order, type: :model do
   let(:user) { create(:user, email: "spree@example.com") }
   let(:order) { create(:order, user: user, store: store) }
   let(:promotion) do
-    FactoryGirl.create(
+    FactoryBot.create(
       :promotion,
       :with_order_adjustment,
       code: "discount"
@@ -43,6 +43,8 @@ RSpec.describe Spree::Order, type: :model do
   end
 
   describe "#cancel!" do
+    subject { order.cancel! }
+
     context "with captured store credit" do
       let!(:store_credit_payment_method) { create(:store_credit_payment_method) }
       let(:order_total) { 500.00 }
@@ -55,7 +57,28 @@ RSpec.describe Spree::Order, type: :model do
         order.capture_payments!
       end
 
-      subject { order.cancel! }
+      it "cancels the order" do
+        expect{ subject }.to change{ order.can_cancel? }.from(true).to(false)
+        expect(order).to be_canceled
+      end
+
+      it "places the order into the canceled scope" do
+        expect{ subject }.to change{ Spree::Order.canceled.include?(order) }.from(false).to(true)
+      end
+
+      it "removes the order from the not_canceled scope" do
+        expect{ subject }.to change{ Spree::Order.not_canceled.include?(order) }.from(true).to(false)
+      end
+    end
+
+    context "with fully refunded payment" do
+      let(:order) { create(:completed_order_with_totals) }
+      let(:payment_amount) { 50 }
+      let(:payment) { create(:payment, order: order, amount: payment_amount, state: 'completed') }
+
+      before do
+        create(:refund, payment: payment, amount: payment_amount)
+      end
 
       it "cancels the order" do
         expect{ subject }.to change{ order.can_cancel? }.from(true).to(false)
@@ -142,7 +165,7 @@ RSpec.describe Spree::Order, type: :model do
     context 'when variant is destroyed' do
       before do
         allow(order).to receive(:restart_checkout_flow)
-        order.line_items.first.variant.destroy
+        order.line_items.first.variant.discard
       end
 
       it 'should restart checkout flow' do
@@ -152,7 +175,7 @@ RSpec.describe Spree::Order, type: :model do
 
       it 'should have error message' do
         subject
-        expect(order.errors[:base]).to include(Spree.t(:deleted_variants_present))
+        expect(order.errors[:base]).to include(I18n.t('spree.deleted_variants_present'))
       end
 
       it 'should be false' do
@@ -497,7 +520,7 @@ RSpec.describe Spree::Order, type: :model do
     end
     it "updates the state column to the first checkout_steps value" do
       order = create(:order_with_totals, state: "delivery")
-      expect(order.checkout_steps).to eql ["address", "delivery", "confirm", "complete"]
+      expect(order.checkout_steps).to eql %w(address delivery payment confirm complete)
       expect{ order.restart_checkout_flow }.to change{ order.state }.from("delivery").to("address")
     end
 
@@ -511,7 +534,7 @@ RSpec.describe Spree::Order, type: :model do
 
   # Regression tests for https://github.com/spree/spree/issues/4072
   context "#state_changed" do
-    let(:order) { FactoryGirl.create(:order) }
+    let(:order) { FactoryBot.create(:order) }
 
     it "logs state changes" do
       order.update_column(:payment_state, 'balance_due')
@@ -581,9 +604,9 @@ RSpec.describe Spree::Order, type: :model do
     context "with more than one payment method" do
       subject { order.available_payment_methods }
 
-      let!(:first_method) { FactoryGirl.create(:payment_method, available_to_users: true,
+      let!(:first_method) { FactoryBot.create(:payment_method, available_to_users: true,
                                                available_to_admin: true) }
-      let!(:second_method) { FactoryGirl.create(:payment_method, available_to_users: true,
+      let!(:second_method) { FactoryBot.create(:payment_method, available_to_users: true,
                                                available_to_admin: true) }
 
       before do
@@ -756,10 +779,10 @@ RSpec.describe Spree::Order, type: :model do
   end
 
   context "#associate_user!" do
-    let!(:user) { FactoryGirl.create(:user) }
+    let!(:user) { FactoryBot.create(:user) }
 
     it "should associate a user with a persisted order" do
-      order = FactoryGirl.create(:order_with_line_items, created_by: nil)
+      order = FactoryBot.create(:order_with_line_items, created_by: nil)
       order.user = nil
       order.email = nil
       order.associate_user!(user)
@@ -776,7 +799,7 @@ RSpec.describe Spree::Order, type: :model do
 
     it "should not overwrite the created_by if it already is set" do
       creator = create(:user)
-      order = FactoryGirl.create(:order_with_line_items, created_by: creator)
+      order = FactoryBot.create(:order_with_line_items, created_by: creator)
 
       order.user = nil
       order.email = nil
@@ -1232,7 +1255,7 @@ RSpec.describe Spree::Order, type: :model do
         context "there are no other payments" do
           it "adds an error to the model" do
             expect(subject).to be false
-            expect(order.errors.full_messages).to include(Spree.t("store_credit.errors.unable_to_fund"))
+            expect(order.errors.full_messages).to include(I18n.t('spree.store_credit.errors.unable_to_fund'))
           end
         end
 
@@ -1545,7 +1568,59 @@ RSpec.describe Spree::Order, type: :model do
     it 'is deprecated' do
       subject.instance_variable_set('@updating_params', {})
       expect(Spree::Deprecation).to receive(:warn)
-      subject.update_params_payment_source
+      subject.send(:update_params_payment_source)
+    end
+  end
+
+  describe "#validate_payments_attributes" do
+    let(:attributes) { [ActionController::Parameters.new(payment_method_id: payment_method.id)] }
+    subject do
+      order.validate_payments_attributes(attributes)
+    end
+
+    context "with empty array" do
+      let(:attributes) { [] }
+      it "doesn't error" do
+        subject
+      end
+    end
+
+    context "with no payment method specified" do
+      let(:attributes) { [ActionController::Parameters.new({})] }
+      it "doesn't error" do
+        subject
+      end
+    end
+
+    context "with valid payment method" do
+      let(:payment_method) { create(:check_payment_method) }
+      it "doesn't error" do
+        subject
+      end
+    end
+
+    context "with inactive payment method" do
+      let(:payment_method) { create(:check_payment_method, active: false) }
+
+      it "raises RecordNotFound" do
+        expect { subject }.to raise_error(ActiveRecord::RecordNotFound)
+      end
+    end
+
+    context "with unavailable payment method" do
+      let(:payment_method) { create(:check_payment_method, available_to_users: false) }
+
+      it "raises RecordNotFound" do
+        expect { subject }.to raise_error(ActiveRecord::RecordNotFound)
+      end
+    end
+
+    context "with soft-deleted payment method" do
+      let(:payment_method) { create(:check_payment_method, deleted_at: Time.current) }
+
+      it "raises RecordNotFound" do
+        expect { subject }.to raise_error(ActiveRecord::RecordNotFound)
+      end
     end
   end
 end

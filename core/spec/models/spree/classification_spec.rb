@@ -89,5 +89,24 @@ module Spree
         expect positions_to_be_valid(taxon_with_5_products)
       end
     end
+
+    it "touches the product" do
+      taxon = taxon_with_5_products
+      classification = taxon.classifications.first
+      product = classification.product
+      product.update_columns(updated_at: 1.day.ago)
+      expect {
+        classification.touch
+      }.to change { product.reload.updated_at }
+    end
+
+    it "touches the taxon" do
+      taxon = taxon_with_5_products
+      classification = taxon.classifications.first
+      taxon.update_columns(updated_at: 1.day.ago)
+      expect {
+        classification.touch
+      }.to change { taxon.reload.updated_at }
+    end
   end
 end

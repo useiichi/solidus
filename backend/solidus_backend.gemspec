@@ -25,11 +25,9 @@ Gem::Specification.new do |s|
 
   s.add_dependency 'sass-rails'
   s.add_dependency 'coffee-rails'
-  s.add_dependency 'bourbon', '>= 4', '< 6'
   s.add_dependency 'jquery-rails'
-  s.add_dependency 'jquery-ui-rails', '~> 5.0.0'
   s.add_dependency 'font-awesome-rails', '~> 4.0'
-  s.add_dependency 'kaminari', '>= 0.17', '< 2.0'
+  s.add_dependency 'kaminari', '~> 1.1'
   s.add_dependency 'jbuilder', '~> 2.6'
 
   s.add_dependency 'handlebars_assets', '~> 0.23'

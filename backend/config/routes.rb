@@ -43,7 +43,7 @@ Spree::Core::Engine.routes.draw do
       member do
         post :clone
       end
-      resources :variants do
+      resources :variants, only: [:index, :edit, :update, :new, :create, :destroy] do
         collection do
           post :update_positions
         end
@@ -151,16 +151,6 @@ Spree::Core::Engine.routes.draw do
 
     resources :shipping_methods
     resources :shipping_categories
-
-    resources :stock_transfers, except: [:destroy] do
-      member do
-        get :receive
-        put :finalize
-        put :close
-        get :tracking_info
-        put :ship
-      end
-    end
 
     resources :stock_locations do
       resources :stock_movements, only: [:index]

@@ -1,4 +1,5 @@
 require 'rails_helper'
+require 'cancan'
 require 'cancan/matchers'
 require 'spree/testing_support/ability_helpers'
 require 'spree/testing_support/bar_ability'
@@ -30,7 +31,7 @@ RSpec.describe Spree::Ability, type: :model do
     subject { Spree::Ability.new(user) }
 
     it "activates permissions from the role configuration" do
-      expect(Spree::RoleConfiguration.instance).to receive(:activate_permissions!).
+      expect(Spree::Config.roles).to receive(:activate_permissions!).
         once
 
       subject

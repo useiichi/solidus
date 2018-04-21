@@ -4,7 +4,7 @@ require 'spree/testing_support/factories/tax_category_factory'
 require 'spree/testing_support/factories/tax_rate_factory'
 require 'spree/testing_support/factories/zone_factory'
 
-FactoryGirl.define do
+FactoryBot.define do
   factory :adjustment, class: 'Spree::Adjustment' do
     order
     adjustable { order }
@@ -20,7 +20,7 @@ FactoryGirl.define do
       end
     end
 
-    factory :tax_adjustment, class: Spree::Adjustment do
+    factory :tax_adjustment, class: 'Spree::Adjustment' do
       order { adjustable.order }
       association(:adjustable, factory: :line_item)
       amount 10.0

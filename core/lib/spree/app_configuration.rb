@@ -18,13 +18,14 @@
 require "spree/core/search/base"
 require "spree/core/search/variant"
 require 'spree/preferences/configuration'
+require 'spree/core/environment'
 
 module Spree
   class AppConfiguration < Preferences::Configuration
     # Alphabetized to more easily lookup particular preferences
 
     # @!attribute [rw] address_requires_state
-    #   @return [Boolean] should state/state_name be required
+    #   @return [Boolean] should state/state_name be required (default: +true+)
     preference :address_requires_state, :boolean, default: true
 
     # @!attribute [rw] admin_interface_logo
@@ -68,11 +69,11 @@ module Spree
     #     and later capture has far superior error handing. VISA and MasterCard
     #     also require that shipments are sent within a certain time of the card
     #     being charged.
-    #   @return [Boolean] Perform a sale/purchase transaction at checkout instead of a authorize and capture.
+    #   @return [Boolean] Automatically capture the credit card (as opposed to just authorize and capture later) (default: +false+)
     preference :auto_capture, :boolean, default: false
 
     # @!attribute [rw] auto_capture_exchanges
-    # @return [Boolean] automatically capture the credit card (as opposed to just authorize and capture later) (default: +false+)
+    #   @return [Boolean] Automatically capture the credit card (as opposed to just authorize and capture later) (default: +false+)
     preference :auto_capture_exchanges, :boolean, default: false
 
     # @!attribute [rw] binary_inventory_cache
@@ -256,6 +257,15 @@ module Spree
     #   @return [Boolean] Indicates if stock management can be restricted by location
     preference :can_restrict_stock_management, :boolean, default: false
 
+    # Allows restricting what currencies will be available.
+    #
+    # @!attribute [r] available_currencies
+    #   @returns [Array] An array of available currencies from Money::Currency.all
+    attr_writer :available_currencies
+    def available_currencies
+      @available_currencies ||= ::Money::Currency.all
+    end
+
     # searcher_class allows spree extension writers to provide their own Search class
     class_name_attribute :searcher_class, default: 'Spree::Core::Search::Base'
 
@@ -286,8 +296,6 @@ module Spree
     class_name_attribute :shipping_rate_sorter_class, default: 'Spree::Stock::ShippingRateSorter'
 
     class_name_attribute :shipping_rate_selector_class, default: 'Spree::Stock::ShippingRateSelector'
-
-    class_name_attribute :shipping_rate_taxer_class, default: 'Spree::Tax::ShippingRateTaxer'
 
     # Allows providing your own class for calculating taxes on a shipping rate.
     #
@@ -364,6 +372,13 @@ module Spree
     #   Spree::CurrentStoreSelector
     class_name_attribute :current_store_selector_class, default: 'Spree::StoreSelector::ByServerName'
 
+    # Allows providing your own class for creating urls on taxons
+    #
+    # @!attribute [rw] taxon_url_parametizer_class
+    # @return [Class] a class that provides a `#parameterize` method that
+    # returns a String
+    class_name_attribute :taxon_url_parametizer_class, default: 'ActiveSupport::Inflector'
+
     # Allows providing your own class instance for generating order numbers.
     #
     # @!attribute [rw] order_number_generator
@@ -381,6 +396,89 @@ module Spree
 
     def stock
       @stock_configuration ||= Spree::Core::StockConfiguration.new
+    end
+
+    def roles
+      @roles ||= Spree::RoleConfiguration.new.tap do |roles|
+        roles.assign_permissions :default, ['Spree::PermissionSets::DefaultCustomer']
+        roles.assign_permissions :admin, ['Spree::PermissionSets::SuperUser']
+      end
+    end
+
+    def environment
+      @environment ||= Spree::Core::Environment.new(self).tap do |env|
+        env.calculators.shipping_methods = %w[
+          Spree::Calculator::Shipping::FlatPercentItemTotal
+          Spree::Calculator::Shipping::FlatRate
+          Spree::Calculator::Shipping::FlexiRate
+          Spree::Calculator::Shipping::PerItem
+          Spree::Calculator::Shipping::PriceSack
+        ]
+
+        env.calculators.tax_rates = %w[
+          Spree::Calculator::DefaultTax
+        ]
+
+        env.stock_splitters = %w[
+          Spree::Stock::Splitter::ShippingCategory
+          Spree::Stock::Splitter::Backordered
+        ]
+
+        env.payment_methods = %w[
+          Spree::PaymentMethod::BogusCreditCard
+          Spree::PaymentMethod::SimpleBogusCreditCard
+          Spree::PaymentMethod::StoreCredit
+          Spree::PaymentMethod::Check
+        ]
+
+        env.promotions = Spree::Promo::Environment.new.tap do |promos|
+          promos.rules = %w[
+            Spree::Promotion::Rules::ItemTotal
+            Spree::Promotion::Rules::Product
+            Spree::Promotion::Rules::User
+            Spree::Promotion::Rules::FirstOrder
+            Spree::Promotion::Rules::UserLoggedIn
+            Spree::Promotion::Rules::OneUsePerUser
+            Spree::Promotion::Rules::Taxon
+            Spree::Promotion::Rules::NthOrder
+            Spree::Promotion::Rules::OptionValue
+            Spree::Promotion::Rules::FirstRepeatPurchaseSince
+            Spree::Promotion::Rules::UserRole
+          ]
+
+          promos.actions = %w[
+            Spree::Promotion::Actions::CreateAdjustment
+            Spree::Promotion::Actions::CreateItemAdjustments
+            Spree::Promotion::Actions::CreateQuantityAdjustments
+            Spree::Promotion::Actions::FreeShipping
+          ]
+
+          promos.shipping_actions = %w[
+            Spree::Promotion::Actions::FreeShipping
+          ]
+        end
+
+        env.calculators.promotion_actions_create_adjustments = %w[
+          Spree::Calculator::FlatPercentItemTotal
+          Spree::Calculator::FlatRate
+          Spree::Calculator::FlexiRate
+          Spree::Calculator::TieredPercent
+          Spree::Calculator::TieredFlatRate
+        ]
+
+        env.calculators.promotion_actions_create_item_adjustments = %w[
+          Spree::Calculator::DistributedAmount
+          Spree::Calculator::FlatRate
+          Spree::Calculator::FlexiRate
+          Spree::Calculator::PercentOnLineItem
+          Spree::Calculator::TieredPercent
+        ]
+
+        env.calculators.promotion_actions_create_quantity_adjustments = %w[
+          Spree::Calculator::PercentOnLineItem
+          Spree::Calculator::FlatRate
+        ]
+      end
     end
 
     # Default admin VAT location

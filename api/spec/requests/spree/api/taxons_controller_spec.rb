@@ -92,6 +92,7 @@ module Spree
       end
 
       it "gets all taxons in JSTree form" do
+        expect(Spree::Deprecation).to(receive(:warn))
         get spree.jstree_api_taxonomy_taxon_path(taxonomy, taxon.id)
         response = json_response.first
         expect(response["data"]).to eq(taxon2.name)
@@ -130,11 +131,11 @@ module Spree
 
         it "handles exclude_data correctly" do
           get spree.api_taxon_products_path, params: { id: taxon.id, simple: true }
-          expect(response).to be_success
+          expect(response).to be_successful
           simple_response = json_response
 
           get spree.api_taxon_products_path, params: { id: taxon.id }
-          expect(response).to be_success
+          expect(response).to be_successful
           full_response = json_response
 
           expect(simple_response["products"][0]["description"]).to be_nil

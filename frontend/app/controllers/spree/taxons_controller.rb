@@ -1,6 +1,5 @@
 module Spree
   class TaxonsController < Spree::StoreController
-    rescue_from ActiveRecord::RecordNotFound, with: :render_404
     helper 'spree/products'
 
     respond_to :html
@@ -9,8 +8,8 @@ module Spree
       @taxon = Spree::Taxon.find_by!(permalink: params[:id])
       return unless @taxon
 
-      @searcher = build_searcher(params.merge(taxon: @taxon.id, include_images: true).reject { |k, _| ["per_page", "page"].include?(k) } )
-      @products = @searcher.retrieve_products.page(params[:page] || 1).per(params[:per_page].presence || Spree::Config[:products_per_page])
+      @searcher = build_searcher(params.merge(taxon: @taxon.id, include_images: true))
+      @products = @searcher.retrieve_products
       @taxonomies = Spree::Taxonomy.includes(root: :children)
     end
 

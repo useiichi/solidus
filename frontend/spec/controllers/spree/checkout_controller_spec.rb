@@ -3,10 +3,10 @@ require 'spec_helper'
 describe Spree::CheckoutController, type: :controller do
   let(:token) { 'some_token' }
   let(:user) { create(:user) }
-  let(:order) { FactoryGirl.create(:order_with_totals) }
+  let(:order) { FactoryBot.create(:order_with_totals) }
 
   let(:address_params) do
-    address = FactoryGirl.build(:address)
+    address = FactoryBot.build(:address)
     address.attributes.except("created_at", "updated_at")
   end
 
@@ -81,11 +81,11 @@ describe Spree::CheckoutController, type: :controller do
         }
       end
 
+      let!(:payment_method) { create(:payment_method) }
       before do
         # Must have *a* shipping method and a payment method so updating from address works
-        allow(order).to receive_messages available_payment_methods: [stub_model(Spree::PaymentMethod)]
         allow(order).to receive_messages ensure_available_shipping_rates: true
-        order.line_items << FactoryGirl.create(:line_item)
+        order.line_items << FactoryBot.create(:line_item)
       end
 
       context "with the order in the cart state" do
@@ -225,6 +225,53 @@ describe Spree::CheckoutController, type: :controller do
         end
       end
 
+      context "when in the payment state" do
+        let(:order) { create(:order_with_line_items) }
+        let(:payment_method) { create(:credit_card_payment_method) }
+
+        let(:params) do
+          {
+            state: 'payment',
+            order: {
+              payments_attributes: [
+                {
+                  payment_method_id: payment_method.id.to_s,
+                  source_attributes: attributes_for(:credit_card)
+                }
+              ]
+            }
+          }
+        end
+
+        before do
+          order.update_attributes! user: user
+          3.times { order.next! } # should put us in the payment state
+        end
+
+        context 'with a permitted payment method' do
+          it 'sets the payment amount' do
+            post :update, params: params
+            order.reload
+            expect(order.state).to eq('confirm')
+            expect(order.payments.size).to eq(1)
+            expect(order.payments.first.amount).to eq(order.total)
+          end
+        end
+
+        context 'with an unpermitted payment method' do
+          before { payment_method.update!(available_to_users: false) }
+
+          it 'sets the payment amount' do
+            expect {
+              post :update, params: params
+            }.to raise_error(ActiveRecord::RecordNotFound)
+
+            expect(order.state).to eq('payment')
+            expect(order.payments).to be_empty
+          end
+        end
+      end
+
       context "when in the confirm state" do
         before do
           order.update_attributes! user: user
@@ -244,7 +291,7 @@ describe Spree::CheckoutController, type: :controller do
 
         it "should populate the flash message" do
           post :update, params: { state: "confirm" }
-          expect(flash.notice).to eq(Spree.t(:order_processed_successfully))
+          expect(flash.notice).to eq(I18n.t('spree.order_processed_successfully'))
         end
 
         it "should remove completed order from current_order" do
@@ -299,14 +346,14 @@ describe Spree::CheckoutController, type: :controller do
 
       it "should render the edit template and display exception message" do
         expect(response).to render_template :edit
-        expect(flash.now[:error]).to eq(Spree.t(:spree_gateway_error_flash_for_checkout))
+        expect(flash.now[:error]).to eq(I18n.t('spree.spree_gateway_error_flash_for_checkout'))
         expect(assigns(:order).errors[:base]).to include("Invalid something or other.")
       end
     end
 
     context "fails to transition from address" do
       let(:order) do
-        FactoryGirl.create(:order_with_line_items).tap do |order|
+        FactoryBot.create(:order_with_line_items).tap do |order|
           order.next!
           expect(order.state).to eq('address')
         end
@@ -340,7 +387,7 @@ describe Spree::CheckoutController, type: :controller do
 
         it "due to no available shipping rates for any of the shipments" do
           put :update, params: { state: "address", order: {} }
-          expect(flash[:error]).to eq(Spree.t(:items_cannot_be_shipped))
+          expect(flash[:error]).to eq(I18n.t('spree.items_cannot_be_shipped'))
           expect(response).to redirect_to(spree.checkout_state_path('address'))
         end
       end
@@ -348,13 +395,13 @@ describe Spree::CheckoutController, type: :controller do
 
     context "when GatewayError is raised" do
       let(:order) do
-        FactoryGirl.create(:order_with_line_items).tap do |order|
+        FactoryBot.create(:order_with_line_items).tap do |order|
           until order.state == 'payment'
             order.next!
           end
           # So that the confirmation step is skipped and we get straight to the action.
-          payment_method = FactoryGirl.create(:simple_credit_card_payment_method)
-          payment = FactoryGirl.create(:payment, payment_method: payment_method, amount: order.total)
+          payment_method = FactoryBot.create(:simple_credit_card_payment_method)
+          payment = FactoryBot.create(:payment, payment_method: payment_method, amount: order.total)
           order.payments << payment
           order.next!
         end
@@ -366,9 +413,9 @@ describe Spree::CheckoutController, type: :controller do
       end
 
       it "fails to transition from payment to complete" do
-        allow_any_instance_of(Spree::Payment).to receive(:process!).and_raise(Spree::Core::GatewayError.new(Spree.t(:payment_processing_failed)))
+        allow_any_instance_of(Spree::Payment).to receive(:process!).and_raise(Spree::Core::GatewayError.new(I18n.t('spree.payment_processing_failed')))
         put :update, params: { state: order.state, order: {} }
-        expect(flash[:error]).to eq(Spree.t(:payment_processing_failed))
+        expect(flash[:error]).to eq(I18n.t('spree.payment_processing_failed'))
       end
     end
   end

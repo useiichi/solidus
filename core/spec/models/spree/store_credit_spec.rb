@@ -1,6 +1,8 @@
 require 'rails_helper'
 
 RSpec.describe Spree::StoreCredit do
+  include ActiveSupport::Testing::TimeHelpers
+
   let(:currency) { "TEST" }
   let(:store_credit) { build(:store_credit, store_credit_attrs) }
   let(:store_credit_attrs) { {} }
@@ -10,12 +12,16 @@ RSpec.describe Spree::StoreCredit do
 
     context "amount used is greater than zero" do
       let(:store_credit) { create(:store_credit, amount: 100, amount_used: 1) }
-      subject { store_credit.destroy }
 
-      it 'can not delete the store credit' do
-        subject
-        expect(store_credit.reload).to eq store_credit
-        expect(store_credit.errors[:amount_used]).to include("is greater than zero. Can not delete store credit")
+      describe "#discard" do
+        subject { store_credit.discard }
+
+        it 'can not delete the store credit' do
+          subject
+          expect(store_credit.reload).to eq store_credit
+          expect(store_credit.errors[:amount_used]).to include("is greater than zero. Can not delete store credit")
+          expect(store_credit).not_to be_discarded
+        end
       end
     end
 
@@ -839,7 +845,7 @@ RSpec.describe Spree::StoreCredit do
 
     it "sets the invalidated_at field to the current time" do
       invalidated_at = 2.minutes.from_now
-      Timecop.freeze(invalidated_at) do
+      travel_to(invalidated_at) do
         subject
         expect(store_credit.invalidated_at).to be_within(1.second).of invalidated_at
       end

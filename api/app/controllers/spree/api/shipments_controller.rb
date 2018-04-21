@@ -2,9 +2,9 @@ module Spree
   module Api
     class ShipmentsController < Spree::Api::BaseController
       before_action :find_order_on_create, only: :create
-      before_action :find_shipment, only: [:update, :ship, :ready, :add, :remove]
+      before_action :find_shipment, only: [:update, :ship, :ready, :add, :remove, :estimated_rates, :select_shipping_method]
       before_action :load_transfer_params, only: [:transfer_to_location, :transfer_to_shipment]
-      around_action :lock_order, except: [:mine]
+      around_action :lock_order, except: [:mine, :estimated_rates]
       before_action :update_shipment, only: [:ship, :ready, :add, :remove]
 
       def mine
@@ -20,6 +20,20 @@ module Spree
         else
           render "spree/api/errors/unauthorized", status: :unauthorized
         end
+      end
+
+      def estimated_rates
+        authorize! :update, @shipment
+        estimator = Spree::Config.stock.estimator_class.new
+        @shipping_rates = estimator.shipping_rates(@shipment.to_package, false)
+      end
+
+      def select_shipping_method
+        authorize! :update, @shipment
+        shipping_method = Spree::ShippingMethod.find(params.require(:shipping_method_id))
+        @shipment.select_shipping_method(shipping_method)
+        @order.recalculate
+        respond_with(@shipment, default_template: :show)
       end
 
       def create
@@ -70,13 +84,13 @@ module Spree
       def remove
         quantity = params[:quantity].to_i
 
-        if @shipment.pending?
+        if @shipment.shipped? || @shipment.canceled?
+          @shipment.errors.add(:base, :cannot_remove_items_shipment_state, state: @shipment.state)
+          invalid_resource!(@shipment)
+        else
           @shipment.order.contents.remove(variant, quantity, { shipment: @shipment })
           @shipment.reload if @shipment.persisted?
           respond_with(@shipment, default_template: :show)
-        else
-          @shipment.errors.add(:base, :cannot_remove_items_shipment_state, state: @shipment.state)
-          invalid_resource!(@shipment)
         end
       end
 
@@ -97,7 +111,7 @@ module Spree
         )
 
         if fulfilment_changer.run!
-          render json: { success: true, message: Spree.t(:shipment_transfer_success) }, status: :accepted
+          render json: { success: true, message: t('spree.shipment_transfer_success') }, status: :accepted
         else
           render json: { success: false, message: fulfilment_changer.errors.full_messages.to_sentence }, status: :accepted
         end

@@ -1,3 +1,5 @@
+require 'discard'
+
 module Spree
   # Base class for all types of promotion action.
   #
@@ -5,11 +7,15 @@ module Spree
   # by an event and determined to be eligible.
   class PromotionAction < Spree::Base
     acts_as_paranoid
+    include Spree::ParanoiaDeprecations
+
+    include Discard::Model
+    self.discard_column = :deleted_at
 
     belongs_to :promotion, class_name: 'Spree::Promotion', inverse_of: :promotion_actions
 
     scope :of_type, ->(t) { where(type: Array.wrap(t).map(&:to_s)) }
-    scope :shipping, -> { of_type(Rails.application.config.spree.promotions.shipping_actions.to_a) }
+    scope :shipping, -> { of_type(Spree::Config.environment.promotions.shipping_actions.to_a) }
 
     # Updates the state of the order or performs some other action depending on
     # the subclass options will contain the payload from the event that

@@ -18,7 +18,7 @@ module Spree
           end
 
           context "with a deleted product" do
-            before { product.destroy! }
+            before { product.discard }
 
             it "is the product" do
               subject
@@ -31,8 +31,8 @@ module Spree
           let!(:variant) { create(:variant, product: product) }
           let!(:deleted_variant) { create(:variant, product: product) }
 
-          context "with deleted variants" do
-            before { deleted_variant.destroy }
+          context "with soft-deleted variants" do
+            before { deleted_variant.discard }
 
             context "when deleted is not requested" do
               it "excludes deleted variants" do
@@ -52,6 +52,16 @@ module Spree
               end
             end
           end
+        end
+      end
+
+      describe "#delete" do
+        let!(:variant) { create(:variant) }
+        let(:product) { variant.product }
+
+        it "can be deleted" do
+          delete :destroy, params: { product_id: product.to_param, id: variant.to_param }
+          expect(variant.reload).to be_discarded
         end
       end
     end

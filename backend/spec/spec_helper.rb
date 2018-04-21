@@ -1,27 +1,21 @@
 if ENV["COVERAGE"]
-  # Run Coverage report
   require 'simplecov'
-  SimpleCov.start do
-    add_group 'Controllers', 'app/controllers'
-    add_group 'Helpers', 'app/helpers'
-    add_group 'Mailers', 'app/mailers'
-    add_group 'Models', 'app/models'
-    add_group 'Views', 'app/views'
-    add_group 'Libraries', 'lib'
-  end
+  SimpleCov.start('rails')
 end
 
 # This file is copied to ~/spec when you run 'ruby script/generate rspec'
 # from the project root directory.
 ENV["RAILS_ENV"] ||= 'test'
 
-begin
-  require File.expand_path("../dummy/config/environment", __FILE__)
-rescue LoadError
-  $stderr.puts "Could not load dummy application. Please ensure you have run `bundle exec rake test_app`"
-  exit 1
-end
+require 'solidus_backend'
+require 'spree/testing_support/dummy_app'
+DummyApp.setup(
+  gem_root: File.expand_path('../../', __FILE__),
+  lib_name: 'solidus_backend'
+)
 
+require 'rails-controller-testing'
+require 'rspec-activemodel-mocks'
 require 'rspec/rails'
 
 # Requires supporting files with custom matchers and macros, etc,
@@ -29,7 +23,7 @@ require 'rspec/rails'
 Dir["#{File.dirname(__FILE__)}/support/**/*.rb"].each { |f| require f }
 
 require 'database_cleaner'
-require 'ffaker'
+require 'with_model'
 
 require 'spree/testing_support/authorization_helpers'
 require 'spree/testing_support/factories'
@@ -42,14 +36,25 @@ require 'spree/testing_support/capybara_ext'
 
 require 'capybara-screenshot/rspec'
 Capybara.save_path = ENV['CIRCLE_ARTIFACTS'] if ENV['CIRCLE_ARTIFACTS']
-
-require 'capybara/poltergeist'
-Capybara.javascript_driver = :poltergeist
 Capybara.exact = true
+
+require "selenium/webdriver"
+
+Capybara.register_driver :selenium_chrome_headless do |app|
+  browser_options = ::Selenium::WebDriver::Chrome::Options.new
+  browser_options.args << '--headless'
+  browser_options.args << '--disable-gpu'
+  browser_options.args << '--window-size=1440,1080'
+  Capybara::Selenium::Driver.new(app, browser: :chrome, options: browser_options)
+end
+
+Capybara.javascript_driver = (ENV['CAPYBARA_DRIVER'] || :selenium_chrome_headless).to_sym
 
 ActionView::Base.raise_on_missing_translations = true
 
 Capybara.default_max_wait_time = ENV['DEFAULT_MAX_WAIT_TIME'].to_f if ENV['DEFAULT_MAX_WAIT_TIME'].present?
+
+ActiveJob::Base.queue_adapter = :test
 
 RSpec.configure do |config|
   config.color = true
@@ -64,7 +69,7 @@ RSpec.configure do |config|
   # If you're not using ActiveRecord, or you'd prefer not to run each of your
   # examples within a transaction, comment the following line or assign false
   # instead of true.
-  config.use_transactional_fixtures = false
+  config.use_transactional_fixtures = true
 
   config.before :suite do
     DatabaseCleaner.clean_with :truncation
@@ -79,25 +84,12 @@ RSpec.configure do |config|
     end
   end
 
-  config.prepend_before(:each) do
-    if RSpec.current_example.metadata[:js]
-      DatabaseCleaner.strategy = :truncation
-    else
-      DatabaseCleaner.strategy = :transaction
-    end
-    DatabaseCleaner.start
-  end
-
   config.before do
     Rails.cache.clear
     reset_spree_preferences
-    if RSpec.current_example.metadata[:js]
+    if RSpec.current_example.metadata[:js] && page.driver.browser.respond_to?(:url_blacklist)
       page.driver.browser.url_blacklist = ['http://fonts.googleapis.com']
     end
-  end
-
-  config.append_after(:each) do
-    DatabaseCleaner.clean
   end
 
   config.include BaseFeatureHelper, type: :feature
@@ -110,7 +102,8 @@ RSpec.configure do |config|
     end
   end
 
-  config.include FactoryGirl::Syntax::Methods
+  config.include FactoryBot::Syntax::Methods
+  config.include ActiveJob::TestHelper
 
   config.include Spree::TestingSupport::Preferences
   config.include Spree::TestingSupport::UrlHelpers
@@ -118,8 +111,6 @@ RSpec.configure do |config|
   config.include Spree::TestingSupport::Flash
 
   config.extend WithModel
-
-  config.fail_fast = ENV['FAIL_FAST'] || false
 
   config.example_status_persistence_file_path = "./spec/examples.txt"
 

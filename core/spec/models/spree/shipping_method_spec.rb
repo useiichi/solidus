@@ -22,17 +22,21 @@ RSpec.describe Spree::ShippingMethod, type: :model do
     before { subject.valid? }
 
     it "validates presence of name" do
-      expect(subject.error_on(:name).size).to eq(1)
+      expect(subject.errors[:name].size).to eq(1)
     end
 
     context "shipping category" do
       it "validates presence of at least one" do
-        expect(subject.error_on(:base).size).to eq(1)
+        expect(subject.errors[:base].size).to eq(1)
       end
 
       context "one associated" do
-        before { subject.shipping_categories.push create(:shipping_category) }
-        it { expect(subject.error_on(:base).size).to eq(0) }
+        before do
+          subject.shipping_categories.push create(:shipping_category)
+          subject.valid?
+        end
+
+        it { expect(subject.errors[:base].size).to eq(0) }
       end
     end
   end
@@ -59,7 +63,7 @@ RSpec.describe Spree::ShippingMethod, type: :model do
   context "soft deletion" do
     let(:shipping_method) { create(:shipping_method) }
     it "soft-deletes when destroy is called" do
-      shipping_method.destroy
+      shipping_method.discard
       expect(shipping_method.deleted_at).not_to be_blank
     end
   end

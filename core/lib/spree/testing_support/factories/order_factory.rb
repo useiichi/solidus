@@ -5,7 +5,7 @@ require 'spree/testing_support/factories/user_factory'
 require 'spree/testing_support/factories/line_item_factory'
 require 'spree/testing_support/factories/payment_factory'
 
-FactoryGirl.define do
+FactoryBot.define do
   factory :order, class: 'Spree::Order' do
     user
     bill_address
@@ -15,7 +15,7 @@ FactoryGirl.define do
     store
 
     transient do
-      line_items_price BigDecimal.new(10)
+      line_items_price { BigDecimal(10) }
     end
 
     # TODO: Improve the name of order_with_totals factory.
@@ -26,6 +26,10 @@ FactoryGirl.define do
           order: order,
           price: evaluator.line_items_price
         )
+      end
+
+      after(:create) do |order|
+        order.recalculate
       end
     end
 

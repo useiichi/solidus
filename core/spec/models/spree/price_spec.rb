@@ -20,8 +20,9 @@ RSpec.describe Spree::Price, type: :model do
     context 'when the amount is less than 0' do
       let(:amount) { -1 }
 
-      it 'has 1 error_on' do
-        expect(subject.error_on(:amount).size).to eq(1)
+      it 'has 1 error on amount' do
+        subject.valid?
+        expect(subject.errors[:amount].size).to eq(1)
       end
       it 'populates errors' do
         subject.valid?
@@ -32,8 +33,9 @@ RSpec.describe Spree::Price, type: :model do
     context 'when the amount is greater than maximum amount' do
       let(:amount) { Spree::Price::MAXIMUM_AMOUNT + 1 }
 
-      it 'has 1 error_on' do
-        expect(subject.error_on(:amount).size).to eq(1)
+      it 'has 1 error on amount' do
+        subject.valid?
+        expect(subject.errors[:amount].size).to eq(1)
       end
       it 'populates errors' do
         subject.valid?
@@ -141,6 +143,6 @@ RSpec.describe Spree::Price, type: :model do
 
     subject { price.net_amount }
 
-    it { is_expected.to eq(BigDecimal.new(20) / 1.1) }
+    it { is_expected.to eq(BigDecimal(20) / 1.1) }
   end
 end

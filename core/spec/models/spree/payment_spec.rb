@@ -589,7 +589,7 @@ RSpec.describe Spree::Payment, type: :model do
       end
 
       specify do
-        expect { payment.process! }.to raise_error(Spree::Core::GatewayError, Spree.t(:payment_processing_failed))
+        expect { payment.process! }.to raise_error(Spree::Core::GatewayError, I18n.t('spree.payment_processing_failed'))
       end
     end
   end
@@ -630,6 +630,25 @@ RSpec.describe Spree::Payment, type: :model do
     end
   end
 
+  describe "#fully_refunded?" do
+    subject { payment.fully_refunded? }
+
+    before { payment.amount = 100 }
+
+    context 'before refund' do
+      it { is_expected.to be false }
+    end
+
+    context 'when refund total equals payment amount' do
+      before do
+        create(:refund, payment: payment, amount: 50)
+        create(:refund, payment: payment, amount: 50)
+      end
+
+      it { is_expected.to be true }
+    end
+  end
+
   describe "#save" do
     context "captured payments" do
       it "update order payment total" do
@@ -662,12 +681,13 @@ RSpec.describe Spree::Payment, type: :model do
     end
 
     context "completed orders" do
+      let(:payment_method) { create(:check_payment_method) }
       before { allow(order).to receive_messages completed?: true }
 
       it "updates payment_state and shipments" do
         expect(order.updater).to receive(:update_payment_state)
         expect(order.updater).to receive(:update_shipment_state)
-        Spree::Payment.create(amount: 100, order: order)
+        Spree::Payment.create!(amount: 100, order: order, payment_method: payment_method)
       end
     end
 
@@ -798,12 +818,13 @@ RSpec.describe Spree::Payment, type: :model do
     end
 
     describe "invalidating payments updates in memory objects" do
+      let(:payment_method) { create(:check_payment_method) }
       before do
-        Spree::PaymentCreate.new(order, amount: 1).build.save!
+        Spree::PaymentCreate.new(order, amount: 1, payment_method_id: payment_method.id).build.save!
         expect(order.payments.map(&:state)).to contain_exactly(
           'checkout'
         )
-        Spree::PaymentCreate.new(order, amount: 2).build.save!
+        Spree::PaymentCreate.new(order, amount: 2, payment_method_id: payment_method.id).build.save!
       end
 
       it 'should not have stale payments' do
@@ -853,8 +874,8 @@ RSpec.describe Spree::Payment, type: :model do
         payment = Spree::PaymentCreate.new(order, params).build
         expect(payment).not_to be_valid
         expect(payment.source).not_to be_nil
-        expect(payment.source.error_on(:number).size).to eq(1)
-        expect(payment.source.error_on(:verification_value).size).to eq(1)
+        expect(payment.source.errors[:number].size).to eq(1)
+        expect(payment.source.errors[:verification_value].size).to eq(1)
       end
     end
 
@@ -1240,7 +1261,7 @@ RSpec.describe Spree::Payment, type: :model do
       before do
         gateway.save!
         payment.save!
-        gateway.destroy
+        gateway.discard
       end
 
       it "works with a soft deleted payment method" do

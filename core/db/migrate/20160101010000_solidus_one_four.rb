@@ -278,16 +278,6 @@ class SolidusOneFour < ActiveRecord::Migration[5.0]
       t.index ["order_id"], name: "index_spree_order_mutexes_on_order_id", unique: true
     end
 
-    create_table "spree_order_stock_locations", force: :cascade do |t|
-      t.integer "order_id"
-      t.integer "variant_id"
-      t.integer "quantity"
-      t.integer "stock_location_id"
-      t.boolean "shipment_fulfilled", default: false, null: false
-      t.datetime "created_at"
-      t.datetime "updated_at"
-    end
-
     create_table "spree_orders", force: :cascade do |t|
       t.string "number", limit: 32
       t.decimal "item_total", precision: 10, scale: 2, default: "0.0", null: false
@@ -827,7 +817,10 @@ class SolidusOneFour < ActiveRecord::Migration[5.0]
       t.index ["deleted_at"], name: "index_spree_stock_items_on_deleted_at"
       t.index ["stock_location_id", "variant_id"], name: "stock_item_by_loc_and_var_id"
       t.index ["stock_location_id"], name: "index_spree_stock_items_on_stock_location_id"
-      t.index ["variant_id", "stock_location_id"], name: "index_spree_stock_items_on_variant_id_and_stock_location_id", unique: true, where: "deleted_at is null"
+
+      if connection.supports_partial_index?
+        t.index ["variant_id", "stock_location_id"], name: "index_spree_stock_items_on_variant_id_and_stock_location_id", unique: true, where: "deleted_at is null"
+      end
     end
 
     create_table "spree_stock_locations", force: :cascade do |t|
@@ -865,29 +858,6 @@ class SolidusOneFour < ActiveRecord::Migration[5.0]
       t.string "originator_type"
       t.integer "originator_id"
       t.index ["stock_item_id"], name: "index_spree_stock_movements_on_stock_item_id"
-    end
-
-    create_table "spree_stock_transfers", force: :cascade do |t|
-      t.string "description"
-      t.integer "source_location_id"
-      t.integer "destination_location_id"
-      t.datetime "created_at"
-      t.datetime "updated_at"
-      t.string "number"
-      t.datetime "shipped_at"
-      t.datetime "closed_at"
-      t.string "tracking_number"
-      t.integer "created_by_id"
-      t.integer "closed_by_id"
-      t.datetime "finalized_at"
-      t.integer "finalized_by_id"
-      t.datetime "deleted_at"
-      t.index ["closed_at"], name: "index_spree_stock_transfers_on_closed_at"
-      t.index ["destination_location_id"], name: "index_spree_stock_transfers_on_destination_location_id"
-      t.index ["finalized_at"], name: "index_spree_stock_transfers_on_finalized_at"
-      t.index ["number"], name: "index_spree_stock_transfers_on_number"
-      t.index ["shipped_at"], name: "index_spree_stock_transfers_on_shipped_at"
-      t.index ["source_location_id"], name: "index_spree_stock_transfers_on_source_location_id"
     end
 
     create_table "spree_store_credit_categories", force: :cascade do |t|
@@ -1030,18 +1000,6 @@ class SolidusOneFour < ActiveRecord::Migration[5.0]
       t.index ["taxonomy_id"], name: "index_taxons_on_taxonomy_id"
     end
 
-    create_table "spree_transfer_items", force: :cascade do |t|
-      t.integer "variant_id", null: false
-      t.integer "stock_transfer_id", null: false
-      t.integer "expected_quantity", default: 0, null: false
-      t.integer "received_quantity", default: 0, null: false
-      t.datetime "created_at"
-      t.datetime "updated_at"
-      t.datetime "deleted_at"
-      t.index ["stock_transfer_id"], name: "index_spree_transfer_items_on_stock_transfer_id"
-      t.index ["variant_id"], name: "index_spree_transfer_items_on_variant_id"
-    end
-
     create_table "spree_unit_cancels", force: :cascade do |t|
       t.integer "inventory_unit_id", null: false
       t.string "reason"
@@ -1118,17 +1076,6 @@ class SolidusOneFour < ActiveRecord::Migration[5.0]
       t.index ["sku"], name: "index_spree_variants_on_sku"
       t.index ["tax_category_id"], name: "index_spree_variants_on_tax_category_id"
       t.index ["track_inventory"], name: "index_spree_variants_on_track_inventory"
-    end
-
-    create_table "spree_wallet_payment_sources", force: :cascade do |t|
-      t.integer "user_id", null: false
-      t.string "payment_source_type", null: false
-      t.integer "payment_source_id", null: false
-      t.boolean "default", default: false, null: false
-      t.datetime "created_at", null: false
-      t.datetime "updated_at", null: false
-      t.index ["user_id", "payment_source_id", "payment_source_type"], name: "index_spree_wallet_payment_sources_on_source_and_user", unique: true
-      t.index ["user_id"], name: "index_spree_wallet_payment_sources_on_user_id"
     end
 
     create_table "spree_zone_members", force: :cascade do |t|

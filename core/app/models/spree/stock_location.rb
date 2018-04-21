@@ -24,7 +24,7 @@ module Spree
     scope :active, -> { where(active: true) }
     scope :order_default, -> { order(default: :desc, name: :asc) }
 
-    after_create :create_stock_items, if: "self.propagate_all_variants?"
+    after_create :create_stock_items, if: :propagate_all_variants?
     after_save :ensure_one_default
 
     def state_text
@@ -93,7 +93,7 @@ module Spree
 
     def move(variant, quantity, originator = nil)
       if quantity < 1 && !stock_item(variant)
-        raise InvalidMovementError.new(Spree.t(:negative_movement_absent_item))
+        raise InvalidMovementError.new(I18n.t('spree.negative_movement_absent_item'))
       end
       stock_item_or_create(variant).stock_movements.create!(quantity: quantity,
                                                             originator: originator)

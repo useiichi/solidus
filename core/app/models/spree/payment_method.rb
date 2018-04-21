@@ -1,3 +1,4 @@
+require 'discard'
 require 'spree/preferences/statically_configurable'
 
 module Spree
@@ -16,6 +17,11 @@ module Spree
     preference :test_mode, :boolean, default: true
 
     acts_as_paranoid
+    include Spree::ParanoiaDeprecations
+
+    include Discard::Model
+    self.discard_column = :deleted_at
+
     acts_as_list
     DISPLAY = [:both, :front_end, :back_end]
 
@@ -58,7 +64,7 @@ module Spree
       def providers
         Spree::Deprecation.warn 'Spree::PaymentMethod.providers is deprecated and will be deleted in Solidus 3.0. ' \
           'Please use Rails.application.config.spree.payment_methods instead'
-        Rails.application.config.spree.payment_methods
+        Spree::Config.environment.payment_methods
       end
 
       def available(display_on = nil, store: nil)
@@ -184,7 +190,7 @@ module Spree
     # If method_type has been overridden, call it and return the value, otherwise return nil
     def deprecated_method_type_override
       if method(:method_type).owner != Spree::PaymentMethod
-        Spree::Deprecation.warn "overriding PaymentMethod#method_type is deprecated and will be removed from Solidus 3.0 (override partial_name instead)", caller
+        Spree::Deprecation.warn "#{method(:method_type).owner} is overriding PaymentMethod#method_type. This is deprecated and will be removed from Solidus 3.0 (override partial_name instead).", caller[1..-1]
         method_type
       end
     end
@@ -258,6 +264,5 @@ module Spree
         raise ::NotImplementedError, "You must implement gateway_class method for #{self.class}."
       end
     end
-    deprecate provider_class: :gateway_class, deprecator: Spree::Deprecation
   end
 end

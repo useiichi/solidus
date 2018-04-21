@@ -1,7 +1,7 @@
 require 'spree/testing_support/factories/state_factory'
 require 'spree/testing_support/factories/country_factory'
 
-FactoryGirl.define do
+FactoryBot.define do
   factory :address, class: 'Spree::Address' do
     transient do
       # There's `Spree::Address#country_iso=`, prohibiting me from using `country_iso` here
@@ -15,7 +15,7 @@ FactoryGirl.define do
     address1 '10 Lovely Street'
     address2 'Northwest'
     city 'Herndon'
-    zipcode { FFaker::AddressUS.zip_code }
+    sequence(:zipcode, 10001) { |i| i.to_s }
     phone '555-555-0199'
     alternative_phone '555-555-0199'
 

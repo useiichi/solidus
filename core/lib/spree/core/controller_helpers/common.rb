@@ -1,3 +1,5 @@
+require 'carmen'
+
 module Spree
   module Core
     module ControllerHelpers
@@ -41,13 +43,6 @@ module Spree
           current_store.seo_title
         end
 
-        def render_404(_exception = nil)
-          respond_to do |type|
-            type.html { render status: :not_found, file: "#{::Rails.root}/public/404", formats: [:html], layout: nil }
-            type.all  { render status: :not_found, nothing: true }
-          end
-        end
-
         private
 
         def set_user_language
@@ -56,6 +51,7 @@ module Spree
           locale ||= Rails.application.config.i18n.default_locale
           locale ||= I18n.default_locale
           I18n.locale = locale
+          Carmen.i18n_backend.locale = locale
         end
 
         # Returns which layout to render.

@@ -7,7 +7,7 @@ module Spree
 
     has_many :adjustments, as: :adjustable, inverse_of: :adjustable, dependent: :delete_all
     has_many :inventory_units, dependent: :destroy, inverse_of: :shipment
-    has_many :shipping_rates, -> { order(:cost) }, dependent: :destroy
+    has_many :shipping_rates, -> { order(:cost) }, dependent: :destroy, inverse_of: :shipment
     has_many :shipping_methods, through: :shipping_rates
     has_many :state_changes, as: :stateful
     has_many :cartons, -> { uniq }, through: :inventory_units
@@ -219,6 +219,14 @@ module Spree
       shipping_rates
     end
 
+    def select_shipping_method(shipping_method)
+      estimator = Spree::Config.stock.estimator_class.new
+      rates = estimator.shipping_rates(to_package, false)
+      rate = rates.detect { |r| r.shipping_method_id == shipping_method.id }
+      rate.selected = true
+      self.shipping_rates = [rate]
+    end
+
     def selected_shipping_rate
       shipping_rates.detect(&:selected?)
     end
@@ -232,14 +240,17 @@ module Spree
     end
 
     def selected_shipping_rate_id=(id)
-      selected_shipping_rate.update(selected: false) if selected_shipping_rate
+      return if selected_shipping_rate_id == id
       new_rate = shipping_rates.detect { |rate| rate.id == id.to_i }
       fail(
         ArgumentError,
         "Could not find shipping rate id #{id} for shipment #{number}"
       ) unless new_rate
-      new_rate.update(selected: true)
-      save!
+
+      transaction do
+        selected_shipping_rate.update!(selected: false) if selected_shipping_rate
+        new_rate.update!(selected: true)
+      end
     end
 
     # Determines the appropriate +state+ according to the following logic:
@@ -259,11 +270,10 @@ module Spree
       end
     end
 
-    def set_up_inventory(state, variant, order, line_item)
+    def set_up_inventory(state, variant, _order, line_item)
       inventory_units.create(
         state: state,
         variant_id: variant.id,
-        order_id: order.id,
         line_item_id: line_item.id
       )
     end

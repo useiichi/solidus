@@ -82,6 +82,9 @@ Spree::Core::Engine.routes.draw do
       end
 
       member do
+        get :estimated_rates
+        put :select_shipping_method
+
         put :ready
         put :ship
         put :add
@@ -119,13 +122,6 @@ Spree::Core::Engine.routes.draw do
     end
 
     resources :stock_items, only: [:index, :update, :destroy]
-
-    resources :stock_transfers, only: [] do
-      member do
-        post :receive
-      end
-      resources :transfer_items, only: [:create, :update, :destroy]
-    end
 
     resources :stores
 

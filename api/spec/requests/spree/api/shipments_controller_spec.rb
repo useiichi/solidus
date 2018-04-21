@@ -1,6 +1,8 @@
 require 'spec_helper'
 
 describe Spree::Api::ShipmentsController, type: :request do
+  include ActiveSupport::Testing::TimeHelpers
+
   let!(:shipment) { create(:shipment, inventory_units: [build(:inventory_unit, shipment: nil)]) }
   let!(:attributes) { [:id, :tracking, :tracking_url, :number, :cost, :shipped_at, :stock_location_name, :order_id, :shipping_rates, :shipping_methods] }
 
@@ -126,11 +128,28 @@ describe Spree::Api::ShipmentsController, type: :request do
 
       it 'removes a destroyed variant from a shipment' do
         order.contents.add(variant, 2)
-        variant.destroy
+        variant.discard
 
         put spree.remove_api_shipment_path(shipment), params: { variant_id: variant.to_param, quantity: 1 }
         expect(response.status).to eq(200)
         expect(json_response['manifest'].detect { |h| h['variant']['id'] == variant.id }["quantity"]).to eq(1)
+      end
+    end
+
+    context 'for ready shipments' do
+      let(:order) { create :order_ready_to_ship, line_items_attributes: [{ variant: variant, quantity: 1 }] }
+      let(:shipment) { order.shipments.first }
+
+      it 'adds a variant to a shipment' do
+        put spree.add_api_shipment_path(shipment), params: { variant_id: variant.to_param, quantity: 1 }
+        expect(response.status).to eq(200)
+        expect(json_response['manifest'].detect { |h| h['variant']['id'] == variant.id }['quantity']).to eq(2)
+      end
+
+      it 'removes a variant from a shipment' do
+        put spree.remove_api_shipment_path(shipment), params: { variant_id: variant.to_param, quantity: 1 }
+        expect(response.status).to eq(200)
+        expect(json_response['manifest'].detect { |h| h['variant']['id'] == variant.id }).to be nil
       end
     end
 
@@ -218,6 +237,48 @@ describe Spree::Api::ShipmentsController, type: :request do
     end
   end
 
+  describe "#estimated_rates" do
+    let!(:user_shipping_method) { shipment.shipping_method }
+    let!(:admin_shipping_method) { create(:shipping_method, available_to_users: false, name: "Secret") }
+
+    sign_in_as_admin!
+
+    subject do
+      get spree.estimated_rates_api_shipment_path(shipment)
+    end
+
+    it "returns success" do
+      subject
+      expect(response).to be_success
+    end
+
+    it "returns rates available to user" do
+      subject
+      expect(json_response['shipping_rates']).to include(
+        {
+          "name" => user_shipping_method.name,
+          "cost" => "100.0",
+          "shipping_method_id" => user_shipping_method.id,
+          "shipping_method_code" => user_shipping_method.code,
+          "display_cost" => "$100.00"
+        }
+      )
+    end
+
+    it "returns rates available to admin" do
+      subject
+      expect(json_response['shipping_rates']).to include(
+        {
+          "name" => admin_shipping_method.name,
+          "cost" => "10.0",
+          "shipping_method_id" => admin_shipping_method.id,
+          "shipping_method_code" => admin_shipping_method.code,
+          "display_cost" => "$10.00"
+        }
+      )
+    end
+  end
+
   describe "#ship" do
     let(:shipment) { create(:order_ready_to_ship).shipments.first }
 
@@ -230,11 +291,12 @@ describe Spree::Api::ShipmentsController, type: :request do
     context "the user is allowed to ship the shipment" do
       sign_in_as_admin!
       it "ships the shipment" do
-        Timecop.freeze do
+        now = Time.current
+        travel_to(now) do
           subject
           shipment.reload
           expect(shipment.state).to eq 'shipped'
-          expect(shipment.shipped_at.to_i).to eq Time.current.to_i
+          expect(shipment.shipped_at.to_i).to eq now.to_i
         end
       end
 
@@ -348,7 +410,7 @@ describe Spree::Api::ShipmentsController, type: :request do
 
         it "returns the correct message" do
           subject
-          expect(response).to be_success
+          expect(response).to be_successful
           expect(parsed_response["success"]).to be true
           expect(parsed_response["message"]).to eq("Variants successfully transferred")
         end

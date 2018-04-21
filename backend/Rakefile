@@ -2,17 +2,21 @@ require 'rubygems'
 require 'rake'
 require 'rake/testtask'
 require 'rspec/core/rake_task'
-require 'spree/testing_support/common_rake'
+
+require 'solidus_backend'
+require 'spree/testing_support/dummy_app/rake_tasks'
 
 RSpec::Core::RakeTask.new
+task default: [:spec, 'spec:js']
 
-task :dummy_environment do
-  ENV['RAILS_ENV'] = 'test'
-  require File.expand_path("../spec/dummy/config/environment", __FILE__)
-end
+DummyApp::RakeTasks.new(
+  gem_root: File.expand_path('../', __FILE__),
+  lib_name: 'solidus_backend'
+)
 
-desc "Run the javascript specs"
-task teaspoon: :dummy_environment do
+task :teaspoon do
+  require 'teaspoon'
+  Rake::Task['dummy_environment'].invoke
   require "teaspoon/console"
 
   options = {
@@ -27,9 +31,15 @@ task teaspoon: :dummy_environment do
   abort("rake teaspoon failed") if Teaspoon::Console.new(options).failures?
 end
 
+desc "Run javascript specs"
+task 'spec:js' => :teaspoon
+
 namespace :teaspoon do
-  task server: :dummy_environment do
+  task :server  do
+    require 'teaspoon'
+    Rake::Task['dummy_environment'].invoke
     require 'teaspoon/server'
+
     server = Teaspoon::Server.new
     server.start
     puts "#{server.url}/teaspoon"
@@ -37,8 +47,4 @@ namespace :teaspoon do
   end
 end
 
-desc "Generates a dummy app for testing"
-task :test_app do
-  ENV['LIB_NAME'] = 'spree/backend'
-  Rake::Task['common:test_app'].invoke
-end
+task test_app: 'db:reset'

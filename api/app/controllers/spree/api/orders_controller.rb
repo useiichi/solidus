@@ -10,7 +10,7 @@ module Spree
       skip_before_action :authenticate_user, only: :apply_coupon_code
 
       before_action :find_order, except: [:create, :mine, :current, :index]
-      around_action :lock_order, except: [:create, :mine, :current, :index]
+      around_action :lock_order, except: [:create, :mine, :current, :index, :show]
 
       # Dynamically defines our stores checkout steps to ensure we check authorization on each step.
       Spree::Order.checkout_steps.keys.each do |step|
@@ -27,8 +27,18 @@ module Spree
 
       def create
         authorize! :create, Order
-        @order = Spree::Core::Importer::Order.import(determine_order_user, order_params)
-        respond_with(@order, default_template: :show, status: 201)
+
+        if can?(:admin, Order)
+          @order = Spree::Core::Importer::Order.import(determine_order_user, order_params)
+          respond_with(@order, default_template: :show, status: 201)
+        else
+          @order = Spree::Order.create!(user: current_api_user, store: current_store)
+          if @order.contents.update_cart order_params
+            respond_with(@order, default_template: :show, status: 201)
+          else
+            invalid_resource!(@order)
+          end
+        end
       end
 
       def empty

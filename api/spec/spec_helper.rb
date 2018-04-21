@@ -1,28 +1,24 @@
 if ENV["COVERAGE"]
-  # Run Coverage report
   require 'simplecov'
-  SimpleCov.start do
-    add_group 'Controllers', 'app/controllers'
-    add_group 'Helpers', 'app/helpers'
-    add_group 'Mailers', 'app/mailers'
-    add_group 'Models', 'app/models'
-    add_group 'Views', 'app/views'
-    add_group 'Libraries', 'lib'
-  end
+  SimpleCov.start('rails')
 end
 
 # This file is copied to spec/ when you run 'rails generate rspec:install'
 ENV["RAILS_ENV"] ||= 'test'
 
-begin
-  require File.expand_path("../dummy/config/environment", __FILE__)
-rescue LoadError
-  $stderr.puts "Could not load dummy application. Please ensure you have run `bundle exec rake test_app`"
-  exit 1
-end
+require 'solidus_api'
+require 'spree/testing_support/dummy_app'
+DummyApp.setup(
+  gem_root: File.expand_path('../../', __FILE__),
+  lib_name: 'solidus_api'
+)
 
+require 'rails-controller-testing'
 require 'rspec/rails'
-require 'ffaker'
+require 'rspec-activemodel-mocks'
+
+require 'database_cleaner'
+require 'with_model'
 
 # Requires supporting ruby files with custom matchers and macros, etc,
 # in spec/support/ and its subdirectories.
@@ -49,7 +45,7 @@ RSpec.configure do |config|
     c.syntax = :expect
   end
 
-  config.include FactoryGirl::Syntax::Methods
+  config.include FactoryBot::Syntax::Methods
   config.include Spree::Api::TestingSupport::Helpers, type: :request
   config.extend Spree::Api::TestingSupport::Setup, type: :request
   config.include Spree::Api::TestingSupport::Helpers, type: :controller
@@ -58,8 +54,6 @@ RSpec.configure do |config|
 
   config.extend WithModel
 
-  config.fail_fast = ENV['FAIL_FAST'] || false
-
   config.before(:each) do
     Rails.cache.clear
     reset_spree_preferences
@@ -67,10 +61,6 @@ RSpec.configure do |config|
   end
 
   config.include ActiveJob::TestHelper
-  config.include VersionCake::TestHelpers, type: :controller
-  config.before(:each, type: :controller) do
-    set_request_version('', 1)
-  end
 
   config.use_transactional_fixtures = true
 

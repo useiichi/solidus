@@ -5,13 +5,13 @@ RSpec.describe Spree::LineItem, type: :model do
   let(:line_item) { order.line_items.first }
 
   context '#destroy' do
-    it "fetches deleted products" do
-      line_item.product.destroy
+    it "fetches soft-deleted products" do
+      line_item.product.discard
       expect(line_item.reload.product).to be_a Spree::Product
     end
 
-    it "fetches deleted variants" do
-      line_item.variant.destroy
+    it "fetches soft-deleted variants" do
+      line_item.variant.discard
       expect(line_item.reload.variant).to be_a Spree::Variant
     end
 
@@ -157,7 +157,7 @@ RSpec.describe Spree::LineItem, type: :model do
 
       it "is a valid line item" do
         expect(line_item.valid?).to be_truthy
-        expect(line_item.error_on(:price).size).to eq(0)
+        expect(line_item.errors[:price].size).to eq(0)
       end
     end
 
@@ -166,7 +166,7 @@ RSpec.describe Spree::LineItem, type: :model do
 
       it "is not a valid line item" do
         expect(line_item.valid?).to be_falsey
-        expect(line_item.error_on(:price).size).to eq(1)
+        expect(line_item.errors[:price].size).to eq(1)
       end
     end
   end

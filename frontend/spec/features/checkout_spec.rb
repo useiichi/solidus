@@ -88,7 +88,7 @@ describe "Checkout", type: :feature, inaccessible: true do
       let!(:order) do
         order = Spree::Order.create!(
           email: "spree@example.com",
-          store: Spree::Store.first || FactoryGirl.create(:store)
+          store: Spree::Store.first || FactoryBot.create(:store)
         )
 
         order.reload
@@ -211,9 +211,9 @@ describe "Checkout", type: :feature, inaccessible: true do
 
   # Regression test for https://github.com/spree/spree/issues/2694 and https://github.com/spree/spree/issues/4117
   context "doesn't allow bad credit card numbers" do
+    let!(:payment_method) { create(:credit_card_payment_method) }
     before(:each) do
       order = OrderWalkthrough.up_to(:delivery)
-      allow(order).to receive_messages(available_payment_methods: [create(:credit_card_payment_method)])
 
       user = create(:user)
       order.user = user
@@ -314,7 +314,8 @@ describe "Checkout", type: :feature, inaccessible: true do
   end
 
   context "user has payment sources", js: true do
-    let(:bogus) { create(:credit_card_payment_method) }
+    before { Spree::PaymentMethod.all.each(&:really_destroy!) }
+    let!(:bogus) { create(:credit_card_payment_method) }
     let(:user) { create(:user) }
 
     let!(:credit_card) do
@@ -324,7 +325,6 @@ describe "Checkout", type: :feature, inaccessible: true do
     before do
       user.wallet.add(credit_card)
       order = OrderWalkthrough.up_to(:delivery)
-      allow(order).to receive_messages(available_payment_methods: [bogus])
 
       allow_any_instance_of(Spree::CheckoutController).to receive_messages(current_order: order)
       allow_any_instance_of(Spree::CheckoutController).to receive_messages(try_spree_current_user: user)
@@ -348,7 +348,7 @@ describe "Checkout", type: :feature, inaccessible: true do
       choose "use_existing_card_no"
 
       fill_in "Name on card", with: 'Spree Commerce'
-      fill_in "Card Number", with: '4111111111111111'
+      fill_in "Card Number", with: '4111 1111 1111 1111'
       fill_in "card_expiry", with: '04 / 20'
       fill_in "Card Code", with: '123'
 
@@ -365,7 +365,7 @@ describe "Checkout", type: :feature, inaccessible: true do
 
   # regression for https://github.com/spree/spree/issues/2921
   context "goes back from payment to add another item", js: true do
-    let!(:store) { FactoryGirl.create(:store) }
+    let!(:store) { FactoryBot.create(:store) }
     let!(:bag) { create(:product, name: "RoR Bag") }
 
     it "transit nicely through checkout steps again" do
@@ -484,7 +484,7 @@ describe "Checkout", type: :feature, inaccessible: true do
         fill_in "Coupon Code", with: 'invalid'
         click_on "Apply Code"
 
-        expect(page).to have_content(Spree.t(:coupon_code_not_found))
+        expect(page).to have_content(I18n.t('spree.coupon_code_not_found'))
       end
     end
 
@@ -522,7 +522,7 @@ describe "Checkout", type: :feature, inaccessible: true do
 
       choose "Credit Card"
       fill_in "Name on card", with: 'Spree Commerce'
-      fill_in "Card Number", with: '4111111111111111'
+      fill_in "Card Number", with: '4111 1111 1111 1111'
       fill_in "card_expiry", with: '04 / 20'
       fill_in "Card Code", with: '123'
       click_button "Save and Continue"
@@ -580,12 +580,12 @@ describe "Checkout", type: :feature, inaccessible: true do
     end
 
     it "displays a thank you message" do
-      expect(page).to have_content(Spree.t(:thank_you_for_your_order))
+      expect(page).to have_content(I18n.t('spree.thank_you_for_your_order'))
     end
 
     it "does not display a thank you message on that order future visits" do
       visit spree.order_path(order)
-      expect(page).to_not have_content(Spree.t(:thank_you_for_your_order))
+      expect(page).to_not have_content(I18n.t('spree.thank_you_for_your_order'))
     end
   end
 
@@ -607,6 +607,7 @@ describe "Checkout", type: :feature, inaccessible: true do
         state_name_css = "order_bill_address_attributes_state_name"
 
         select "Canada", from: "order_bill_address_attributes_country_id"
+        fill_in 'Customer E-Mail', with: 'test@example.com'
         fill_in state_name_css, with: xss_string
         fill_in "Zip", with: "H0H0H0"
 
@@ -654,7 +655,7 @@ describe "Checkout", type: :feature, inaccessible: true do
       click_on "Save and Continue"
       click_on "Save and Continue"
 
-      fill_in_credit_card(number: "4111111111111111")
+      fill_in_credit_card(number: "4111 1111 1111 1111")
       click_on "Save and Continue"
 
       expect(page).to have_current_path("/checkout/confirm")
@@ -663,7 +664,7 @@ describe "Checkout", type: :feature, inaccessible: true do
 
   def fill_in_credit_card(number:)
     fill_in "Card Number", with: number
-    fill_in "Expiration", with: "1224"
+    fill_in "Expiration", with: "12 / 24"
     fill_in "Card Code", with: "123"
   end
 

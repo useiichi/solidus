@@ -45,26 +45,6 @@
   }
 }
 
-// Customize orduct add fieldset
-#add-line-item {
-  fieldset {
-    padding: 10px 0;
-
-    .field {
-      margin-bottom: 0;
-
-      input[type="text"], input[type="number"] {
-        width: 100%;
-      }
-    }
-    .actions {
-      .button {
-        margin-top: 28px;
-      }
-    }
-  }
-}
-
 [data-hook="adjustments_new_coupon_code"] {
   margin-bottom: 18px;
 }
@@ -89,5 +69,9 @@ table.line-items {
   .select2-container.error {
     border-radius: 4px;
     border: 1px solid theme-color("danger");
+  }
+
+  .line-item-select-variant .select2-chosen {
+    max-width: 400px;
   }
 }

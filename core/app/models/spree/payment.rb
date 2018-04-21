@@ -40,6 +40,7 @@ module Spree
 
     validates :amount, numericality: true
     validates :source, presence: true, if: :source_required?
+    validates :payment_method, presence: true
 
     default_scope -> { order(:created_at) }
 
@@ -146,6 +147,11 @@ module Spree
       credit_allowed > 0
     end
 
+    # @return [Boolean] true when this payment has been fully refunded
+    def fully_refunded?
+      refunds.map(&:amount).sum == amount
+    end
+
     # @return [Array<String>] the actions available on this payment
     def actions
       sa = source_actions
@@ -199,7 +205,7 @@ module Spree
       if source && !source.valid?
         source.errors.each do |field, error|
           field_name = I18n.t("activerecord.attributes.#{source.class.to_s.underscore}.#{field}")
-          errors.add(Spree.t(source.class.to_s.demodulize.underscore), "#{field_name} #{error}")
+          errors.add(I18n.t(source.class.to_s.demodulize.underscore, scope: 'spree'), "#{field_name} #{error}")
         end
       end
       if errors.any?

@@ -2,23 +2,17 @@ require 'spec_helper'
 
 ENV["RAILS_ENV"] ||= 'test'
 
-begin
-  require File.expand_path("../dummy/config/environment", __FILE__)
-rescue LoadError
-  $stderr.puts "Could not load dummy application. Please ensure you have run `bundle exec rake test_app`"
-  exit 1
-end
+require 'spree/testing_support/dummy_app'
+DummyApp.setup(
+  gem_root: File.expand_path('../../', __FILE__),
+  lib_name: 'solidus_core'
+)
 
 require 'rspec/rails'
+require 'rspec-activemodel-mocks'
 require 'database_cleaner'
 
 Dir["./spec/support/**/*.rb"].sort.each { |f| require f }
-
-require 'ffaker'
-
-if ENV["CHECK_TRANSLATIONS"]
-  require "spree/testing_support/i18n"
-end
 
 require 'spree/testing_support/factories'
 require 'spree/testing_support/preferences'
@@ -45,5 +39,5 @@ RSpec.configure do |config|
   end
 
   config.include ActiveJob::TestHelper
-  config.include FactoryGirl::Syntax::Methods
+  config.include FactoryBot::Syntax::Methods
 end

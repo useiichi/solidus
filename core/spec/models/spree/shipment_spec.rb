@@ -37,7 +37,7 @@ RSpec.describe Spree::Shipment, type: :model do
           end
         end.to change { Spree::Shipment.count }.by(1)
 
-        new_shipment = order.shipments.last
+        new_shipment = order.shipments.order(:created_at).last
         expect(new_shipment.number).to_not eq(shipment.number)
         expect(new_shipment.stock_location).to eq(stock_location)
         expect(new_shipment.line_items.count).to eq(1)
@@ -196,7 +196,7 @@ RSpec.describe Spree::Shipment, type: :model do
     end
 
     context "variant was removed" do
-      before { variant.destroy }
+      before { variant.discard }
 
       it "still returns variant expected" do
         expect(shipment.manifest.first.variant).to eq variant
@@ -264,6 +264,7 @@ RSpec.describe Spree::Shipment, type: :model do
         end
 
         before do
+          allow(line_item).to receive(:order) { order }
           allow(shipment).to receive(:inventory_units) { inventory_units }
           allow(inventory_units).to receive_message_chain(:includes, :joins).and_return inventory_units
         end
@@ -525,14 +526,6 @@ RSpec.describe Spree::Shipment, type: :model do
           allow(shipment).to receive_messages(require_inventory: false, update_order: true, state: state)
         end
 
-        it "should call fulfill_order_with_stock_location" do
-          expect(Spree::OrderStockLocation).to(
-            receive(:fulfill_for_order_with_stock_location).
-            with(order, stock_location)
-          )
-          shipment.ship!
-        end
-
         it "finalizes adjustments" do
           shipment.adjustments.each do |adjustment|
             expect(adjustment).to receive(:finalize!)
@@ -658,7 +651,7 @@ RSpec.describe Spree::Shipment, type: :model do
     let(:inventory_units) { double }
 
     let(:params) do
-      { variant_id: variant.id, state: 'on_hand', order_id: order.id, line_item_id: line_item.id }
+      { variant_id: variant.id, state: 'on_hand', line_item_id: line_item.id }
     end
 
     before { allow(shipment).to receive_messages inventory_units: inventory_units }
@@ -816,6 +809,14 @@ RSpec.describe Spree::Shipment, type: :model do
     let!(:air_shipping_method) { create(:shipping_method, name: "Air") }
     let(:new_rate) { shipment.shipping_rates.create!(shipping_method: air_shipping_method) }
 
+    context 'selecting the same id' do
+      it 'keeps the same shipping rate selected' do
+        expect {
+          shipment.selected_shipping_rate_id = shipping_rate.id
+        }.not_to change { shipping_rate.selected }.from(true)
+      end
+    end
+
     context 'when the id exists' do
       it 'sets the new shipping rate as selected' do
         expect {
@@ -835,6 +836,9 @@ RSpec.describe Spree::Shipment, type: :model do
         expect {
           shipment.selected_shipping_rate_id = -1
         }.to raise_error(ArgumentError)
+
+        # Should not change selection
+        expect(shipping_rate.reload).to be_selected
       end
     end
   end

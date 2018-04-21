@@ -31,6 +31,8 @@ feature 'Promotion with option value rule' do
 
     within('#rules_container') { click_button "Update" }
 
+    expect(page).to have_content("has been successfully updated")
+
     first_rule = promotion.rules.reload.first
     expect(first_rule.class).to eq Spree::Promotion::Rules::OptionValue
     expect(first_rule.preferred_eligible_values).to eq Hash[product.id => [option_value.id]]
@@ -72,11 +74,12 @@ feature 'Promotion with option value rule' do
     end
 
     scenario "deleting a product", js: true do
-      within(".promo-rule-option-value:last-child") do
-        find(".remove").click
-      end
+      expect(page).to have_css('.promo-rule-option-value', count: 2)
+      all('.promo-rule-option-value')[1].find('.remove').click
 
       within('#rules_container') { click_button "Update" }
+
+      expect(page).to have_content("has been successfully updated")
 
       first_rule = promotion.rules.reload.first
       expect(first_rule.preferred_eligible_values).to eq Hash[variant1.product_id => variant1.option_values.pluck(:id)]

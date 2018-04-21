@@ -1,10 +1,9 @@
 require 'rails/all'
-require 'active_merchant'
 require 'acts_as_list'
 require 'awesome_nested_set'
 require 'cancan'
 require 'friendly_id'
-require 'kaminari'
+require 'kaminari/activerecord'
 require 'mail'
 require 'monetize'
 require 'paperclip'
@@ -13,6 +12,7 @@ require 'ransack'
 require 'state_machines-activerecord'
 
 require 'spree/deprecation'
+require 'spree/paranoia_deprecations'
 
 # This is required because ActiveModel::Validations#invalid? conflicts with the
 # invalid state of a Payment. In the future this should be removed.
@@ -53,6 +53,7 @@ end
 
 require 'spree/core/version'
 
+require 'spree/core/active_merchant_dependencies'
 require 'spree/core/class_constantizer'
 require 'spree/core/environment_extension'
 require 'spree/core/environment/calculators'

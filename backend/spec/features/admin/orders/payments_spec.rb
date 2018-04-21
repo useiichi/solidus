@@ -62,11 +62,11 @@ describe 'Payments', type: :feature do
       expect(page).to have_content 'my cc address'
     end
 
-    it 'lists and create payments for an order', js: true do
+    it 'lists, updates and creates payments for an order', js: true do
       within_row(1) do
-        expect(column_text(3)).to eq('$150.00')
-        expect(column_text(4)).to eq('Credit Card')
-        expect(column_text(6)).to eq('Checkout')
+        expect(column_text(3)).to eq('Credit Card')
+        expect(column_text(5)).to eq('Checkout')
+        expect(column_text(6)).to have_content('$150.00')
       end
 
       click_icon :void
@@ -74,9 +74,7 @@ describe 'Payments', type: :feature do
       expect(page).to have_content('Payment Updated')
 
       within_row(1) do
-        expect(column_text(3)).to eq('$150.00')
-        expect(column_text(4)).to eq('Credit Card')
-        expect(column_text(6)).to eq('Void')
+        expect(column_text(5)).to eq('Void')
       end
 
       click_on 'New Payment'
@@ -135,7 +133,6 @@ describe 'Payments', type: :feature do
           click_icon(:save)
         end
         expect(page).to have_selector('.flash.error', text: 'Invalid resource. Please fix errors and try again.')
-        expect(page).to have_field('amount', with: 'invalid')
         expect(payment.reload.amount).to eq(150.00)
       end
     end
@@ -228,7 +225,7 @@ describe 'Payments', type: :feature do
       end
 
       before do
-        payment_method.destroy
+        payment_method.discard
         visit spree.admin_order_payments_path(order.reload)
       end
 
@@ -287,7 +284,7 @@ describe 'Payments', type: :feature do
       fill_in "Expiration", with: "09 / #{Time.current.year + 1}"
       fill_in "Card Code", with: "007"
       click_button "Continue"
-      expect(page).to have_content Spree.t(:insufficient_stock_for_order)
+      expect(page).to have_content I18n.t('spree.insufficient_stock_for_order')
     end
   end
 end

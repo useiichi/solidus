@@ -67,13 +67,13 @@ module Spree
 
       def self.price_filter
         v = Spree::Price.arel_table
-        conds = [[Spree.t(:under_price, price: format_price(10)), v[:amount].lteq(10)],
+        conds = [[I18n.t('spree.under_price', price: format_price(10)), v[:amount].lteq(10)],
                  ["#{format_price(10)} - #{format_price(15)}", v[:amount].in(10..15)],
                  ["#{format_price(15)} - #{format_price(18)}", v[:amount].in(15..18)],
                  ["#{format_price(18)} - #{format_price(20)}", v[:amount].in(18..20)],
-                 [Spree.t(:or_over_price, price: format_price(20)), v[:amount].gteq(20)]]
+                 [I18n.t('spree.or_over_price', price: format_price(20)), v[:amount].gteq(20)]]
         {
-          name:   Spree.t(:price_range),
+          name:   I18n.t('spree.price_range'),
           scope:  :price_range_any,
           conds:  Hash[*conds.flatten],
           labels: conds.map { |k, _v| [k, k] }
@@ -164,6 +164,7 @@ module Spree
       # This scope selects products in any of the active taxons or their children.
       #
       def self.taxons_below(taxon)
+        Spree::Deprecation.warn "taxons_below is deprecated in solidus_core. Please add it to your own application to continue using it."
         return Spree::Core::ProductFilters.all_taxons if taxon.nil?
         {
           name:   'Taxons under ' + taxon.name,
@@ -180,6 +181,7 @@ module Spree
       #
       # idea: expand the format to allow nesting of labels?
       def self.all_taxons
+        Spree::Deprecation.warn "all_taxons is deprecated in solidus_core. Please add it to your own application to continue using it."
         taxons = Spree::Taxonomy.all.map { |t| [t.root] + t.root.descendants }.flatten
         {
           name:   'All taxons',

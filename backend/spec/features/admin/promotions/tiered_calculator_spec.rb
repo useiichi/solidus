@@ -13,14 +13,14 @@ feature "Tiered Calculator Promotions" do
     select "Create whole-order adjustment", from: "Add action of type"
     within('#action_fields') { click_button "Add" }
 
-    select "Tiered Percent", from: "Base Calculator"
+    select "Tiered Percent", from: I18n.t('spree.admin.promotions.actions.calculator_label')
     within('#actions_container') { click_button "Update" }
 
     within("#actions_container .settings") do
       expect(page).to have_content("Base Percent")
       expect(page).to have_content("Tiers")
 
-      click_button "Add"
+      page.find('a.button').click
     end
 
     fill_in "Base Percent", with: 5
@@ -38,7 +38,7 @@ feature "Tiered Calculator Promotions" do
     first_action_calculator = first_action.calculator
     expect(first_action_calculator.class).to eq Spree::Calculator::TieredPercent
     expect(first_action_calculator.preferred_base_percent).to eq 5
-    expect(first_action_calculator.preferred_tiers).to eq(BigDecimal.new(100) => BigDecimal.new(10))
+    expect(first_action_calculator.preferred_tiers).to eq(BigDecimal(100) => BigDecimal(10))
   end
 
   context "with an existing tiered flat rate calculator" do
@@ -62,10 +62,12 @@ feature "Tiered Calculator Promotions" do
 
       within('#actions_container') { click_button "Update" }
 
+      expect(page).to have_text('has been successfully updated!')
+
       calculator = promotion.actions.first.calculator
       expect(calculator.preferred_tiers).to eq({
-        BigDecimal.new(100) => 10,
-        BigDecimal.new(300) => 20
+        BigDecimal(100) => 10,
+        BigDecimal(300) => 20
       })
     end
   end

@@ -10,20 +10,19 @@ module Spree
         delegate :eligible?, to: :promotion
 
         before_validation :ensure_action_has_calculator
-        before_destroy :deals_with_adjustments_for_deleted_source
+        before_destroy :remove_adjustments_from_incomplete_orders
+        before_discard :remove_adjustments_from_incomplete_orders
 
         def perform(payload = {})
           order = payload[:order]
           promotion = payload[:promotion]
           promotion_code = payload[:promotion_code]
 
-          result = false
-
-          line_items_to_adjust(promotion, order).each do |line_item|
-            current_result = create_adjustment(line_item, order, promotion_code)
-            result ||= current_result
+          results = line_items_to_adjust(promotion, order).map do |line_item|
+            create_adjustment(line_item, order, promotion_code)
           end
-          result
+
+          results.any?
         end
 
         # Ensure a negative amount which does not exceed the sum of the order's
@@ -35,7 +34,7 @@ module Spree
           if !promotion_amount.is_a?(BigDecimal)
             Spree::Deprecation.warn "#{calculator.class.name}#compute returned #{promotion_amount.inspect}, it should return a BigDecimal"
           end
-          promotion_amount ||= BigDecimal.new(0)
+          promotion_amount ||= BigDecimal(0)
           promotion_amount = promotion_amount.abs
           [adjustable.amount, promotion_amount].min * -1
         end
@@ -64,7 +63,7 @@ module Spree
             amount: amount,
             order: order,
             promotion_code: promotion_code,
-            label: Spree.t('adjustment_labels.line_item', promotion: Spree::Promotion.model_name.human, promotion_name: promotion.name)
+            label: I18n.t('spree.adjustment_labels.line_item', promotion: Spree::Promotion.model_name.human, promotion_name: promotion.name)
           )
           true
         end

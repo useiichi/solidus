@@ -1,11 +1,13 @@
+require 'carmen'
+
 module Spree
   module BaseHelper
     def link_to_cart(text = nil)
-      text = text ? h(text) : Spree.t(:cart)
+      text = text ? h(text) : t('spree.cart')
       css_class = nil
 
       if current_order.nil? || current_order.item_count.zero?
-        text = "#{text}: (#{Spree.t(:empty)})"
+        text = "#{text}: (#{t('spree.empty')})"
         css_class = 'empty'
       else
         text = "#{text}: (#{current_order.item_count})  <span class='amount'>#{current_order.display_total.to_html}</span>"
@@ -69,14 +71,12 @@ module Spree
     def taxon_breadcrumbs(taxon, separator = '&nbsp;&raquo;&nbsp;', breadcrumb_class = 'inline')
       return '' if current_page?('/') || taxon.nil?
 
-      crumbs = [[Spree.t(:home), spree.root_path]]
+      crumbs = [[t('spree.home'), spree.root_path]]
 
+      crumbs << [t('spree.products'), products_path]
       if taxon
-        crumbs << [Spree.t(:products), products_path]
         crumbs += taxon.ancestors.collect { |a| [a.name, spree.nested_taxons_path(a.permalink)] } unless taxon.ancestors.empty?
         crumbs << [taxon.name, spree.nested_taxons_path(taxon.permalink)]
-      else
-        crumbs << [Spree.t(:products), products_path]
       end
 
       separator = raw(separator)
@@ -115,8 +115,14 @@ module Spree
         countries = Country.all
       end
 
+      country_names = Carmen::Country.all.map do |country|
+        [country.code, country.name]
+      end.to_h
+
+      country_names.update I18n.t('spree.country_names', default: {}).stringify_keys
+
       countries.collect do |country|
-        country.name = Spree.t(country.iso, scope: 'country_names', default: country.name)
+        country.name = country_names.fetch(country.iso, country.name)
         country
       end.sort_by { |c| c.name.parameterize }
     end
@@ -129,9 +135,8 @@ module Spree
       product_or_variant.price_for(current_pricing_options).to_html
     end
 
-    def pretty_time(time)
-      [I18n.l(time.to_date, format: :long),
-       time.strftime("%l:%M %p")].join(" ")
+    def pretty_time(time, format = :long)
+      I18n.l(time, format: :"solidus.#{format}")
     end
 
     def link_to_tracking(shipment, options = {})

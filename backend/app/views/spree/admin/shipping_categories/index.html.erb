@@ -1,14 +1,14 @@
 <%= render 'spree/admin/shared/shipping_tabs' %>
 
-<% admin_breadcrumb(Spree.t(:settings)) %>
-<% admin_breadcrumb(Spree.t('admin.tab.shipping')) %>
+<% admin_breadcrumb(t('spree.settings')) %>
+<% admin_breadcrumb(t('spree.admin.tab.shipping')) %>
 <% admin_breadcrumb(plural_resource_name(Spree::ShippingCategory)) %>
 
 
 <% content_for :page_actions do %>
   <% if can?(:create, Spree::ShippingCategory) %>
     <li>
-      <%= button_link_to Spree.t(:new_shipping_category), new_object_url %>
+      <%= button_link_to t('spree.new_shipping_category'), new_object_url %>
     </li>
   <% end %>
 <% end %>
@@ -30,7 +30,7 @@
     <tr id="<%= spree_dom_id shipping_category %>" data-hook="category_row">
       <td><%= shipping_category.name %></td>
       <td class="actions">
-        <% if can?(:udpate, shipping_category) %>
+        <% if can?(:update, shipping_category) %>
           <%= link_to_edit shipping_category, no_text: true %>
         <% end %>
 
@@ -43,7 +43,7 @@
   </tbody>
 </table>
 <% else %>
-  <div class="col-9 no-objects-found">
+  <div class="no-objects-found">
     <%= render 'spree/admin/shared/no_objects_found',
                  resource: Spree::ShippingCategory,
                  new_resource_url: new_object_url %>
