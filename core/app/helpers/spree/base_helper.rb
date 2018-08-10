@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'carmen'
 
 module Spree
@@ -18,8 +20,8 @@ module Spree
     end
 
     # human readable list of variant options
-    def variant_options(v, _options = {})
-      v.options_text
+    def variant_options(variant, _options = {})
+      variant.options_text
     end
 
     def meta_data
@@ -35,10 +37,12 @@ module Spree
         meta[:description] = truncate(strip_tags(object.description), length: 160, separator: ' ')
       end
 
-      meta.reverse_merge!({
-        keywords: current_store.meta_keywords,
-        description: current_store.meta_description
-      }) if meta[:keywords].blank? || meta[:description].blank?
+      if meta[:keywords].blank? || meta[:description].blank?
+        meta.reverse_merge!({
+          keywords: current_store.meta_keywords,
+          description: current_store.meta_description
+        })
+      end
       meta
     end
 
@@ -106,8 +110,8 @@ module Spree
       end
     end
 
-    def available_countries
-      checkout_zone = Zone.find_by(name: Spree::Config[:checkout_zone])
+    def available_countries(restrict_to_zone: Spree::Config[:checkout_zone])
+      checkout_zone = Zone.find_by(name: restrict_to_zone)
 
       if checkout_zone && checkout_zone.kind == 'country'
         countries = checkout_zone.country_list

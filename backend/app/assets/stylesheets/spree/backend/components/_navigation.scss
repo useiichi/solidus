@@ -160,6 +160,10 @@ nav.menu {
   }
 }
 
+.admin-locale-selection {
+  margin: 1em;
+}
+
 .admin-nav.fits .admin-nav-footer {
   position: fixed;
   bottom: 0;
@@ -170,8 +174,8 @@ nav.menu {
 
 .admin-login-nav {
   list-style: none;
-  margin: 0;
-  padding: 1rem 0;
+  padding: 0;
+  margin: 1rem 0;
 
   li {
     padding: 0.3rem 1.2rem;

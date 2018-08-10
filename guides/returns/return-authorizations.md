@@ -1,11 +1,18 @@
-# Return authorizations (RMAs)
+# Return authorizations
+
+A `Spree::ReturnAuthorization` allows you to authorize the return of any part of
+a customer's order. A return authorization can only be created for shipments
+that have already been shipped. For each item in a return authorization, a
+[`Spree::ReturnItem`][return-items] is created.
+
+Return authorizations are also referred to as "return
+merchandise authorizations" (RMAs) in the `solidus_backend`.
 
 After an order is shipped, administrators can approve the return of any part
 of an order in the `solidus_backend` (from the **Orders -> Order -> RMA** page).
 
-Return authorizations are just the first part of the larger returns system built
-into Solidus. When a store administrator creates a new RMA, they fill out a form
-that defines the scope of the anticipated return.
+Once an RMA has been created, store administrators can add any item listed in
+the RMA to a new [`Spree::CustomerReturn`][customer-returns].
 
 A `Spree::ReturnAuthorization` object has the following attributes:
 
@@ -20,6 +27,14 @@ A `Spree::ReturnAuthorization` object has the following attributes:
   authorization.
 - `return_reason_id`: The ID for the `Spree::ReturnReason` associated with this
   return authorization.
+
+RMAs begin the larger customer return process. Note that there are many ways
+that the administrator could provide compensation to a customer.
+
+[customer-returns]: customer-returns.md
+[return-items]: return-items.md
+
+## Return authorization flow
 
 The RMA creation process typically includes the following steps:
 
@@ -37,7 +52,7 @@ The RMA creation process typically includes the following steps:
 6. Once the new RMA form is completed, they press the **Create** button and
    generate a new `Spree::ReturnAuthorization` object. 
 
-After the customer has mailed their returns back, the administrator can mark the
+After the customer has mailed their returns back, the administrator can mark
 the customer return as received (on the backend's **Orders -> Order -> Customer
 Returns** page).
 
@@ -45,4 +60,3 @@ Returns** page).
   Again, we should add links here once additional returns documentation exists
   here.
 -->
-

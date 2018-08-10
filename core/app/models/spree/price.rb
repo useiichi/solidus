@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'discard'
 
 module Spree
@@ -34,7 +36,7 @@ module Spree
     money_methods :amount, :price
     alias_method :money, :display_amount
 
-    self.whitelisted_ransackable_attributes = %w( amount variant_id currency country_iso )
+    self.whitelisted_ransackable_attributes = %w(amount variant_id currency country_iso)
 
     # An alias for #amount
     def price

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'spree/deprecation'
 
 module Spree
@@ -42,6 +44,10 @@ module Spree
           else
             super
           end
+        end
+
+        def respond_to_missing?(name)
+          @properties.key?(name) || super(name)
         end
 
         protected

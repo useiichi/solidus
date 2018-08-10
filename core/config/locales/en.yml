@@ -224,6 +224,8 @@ en:
         form_text: "Apply this promotion to users whose last order was more than X days ago: "
       spree/promotion/rules/user_role:
         description: Order includes User with specified Role(s)
+      spree/promotion/rules/store:
+        description: Available only to the specified stores
       spree/promotion_category:
         name: Name
       spree/property:
@@ -297,12 +299,14 @@ en:
         name: Name
       spree/store:
         url: Site URL
+        default: Default
         meta_description: Meta Description
         meta_keywords: Meta Keywords
         seo_title: Seo Title
         name: Site Name
         mail_from_address: Mail From Address
         cart_tax_country_iso: Tax Country for Empty Carts
+        available_locales: Locales available in the storefront
       spree/store_credit:
         amount: Amount
         amount_authorized: Amount Authorized
@@ -315,7 +319,8 @@ en:
         memo: Memo
       spree/store_credit_event:
         action: Action
-        user_total_amount: Total Unused
+        amount_remaining: Total Unused
+        user_total_amount: Total Amount
       spree/store_credit_update_reason:
         name: Reason For Updating
       spree/stock_item:
@@ -340,8 +345,9 @@ en:
         state_id: State
         zipcode: Zip
       spree/stock_movement:
-        action: Action
+        originated_by: Originated By
         quantity: Quantity
+        variant: Variant
       spree/tax_category:
         description: Description
         name: Name
@@ -1279,6 +1285,7 @@ en:
         master_variant: "Changing master variant prices will not change variant prices below, but will be used to populate all new variants"
         options: "These options are used to create variants in the variants table. They can be changed in the variants tab"
       spree/product:
+        available_on: "This sets the availability date for the product. If this value is not set, or it is set to a date in the future, then the product is not available on the storefront."
         promotionable: "This determines whether or not promotions can apply to this product.<br/>Default: Checked"
         shipping_category: "This determines what kind of shipping this product requires.<br/> Default: Default"
         tax_category: "This determines what kind of taxation is applied to this product.<br/> Default: None"
@@ -1294,6 +1301,7 @@ en:
         check_stock_on_transfer: "When checked, inventory levels will be checked when performing stock transfers.<br/> Default: Checked"
       spree/store:
         cart_tax_country_iso: "This determines which country is used for taxes on carts (orders which don't yet have an address).<br/> Default: None."
+        available_locales: "This determines which locales are available for your customers to choose from in the storefront."
       spree/variant:
         tax_category: "This determines what kind of taxation is applied to this variant.<br/> Default: Use tax category of the product associated with this variant"
         deleted: "Deleted Variant"
@@ -1733,7 +1741,7 @@ en:
     receiving_match: Receiving match
     reception_states:
       awaiting: Awaiting
-      canceled: Canceled
+      cancelled: Canceled
       expired: Expired
       given_to_customer: Given to customer
       in_transit: In transit
@@ -1966,6 +1974,8 @@ en:
       user_has_no_store_credits: "User does not have any available store credit"
     store_credit_category:
       default: Default
+    store_rule:
+      choose_stores: Choose Stores
     street_address: Street Address
     street_address_2: Street Address (cont'd)
     subtotal: Subtotal

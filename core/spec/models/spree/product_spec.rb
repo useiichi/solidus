@@ -1,4 +1,4 @@
-# coding: UTF-8
+# frozen_string_literal: true
 
 require 'rails_helper'
 
@@ -217,6 +217,16 @@ RSpec.describe Spree::Product, type: :model do
         it "returns only variants which have matching prices" do
           expect(product.variants_and_option_values_for).to contain_exactly(low, high)
           expect(product.variants_and_option_values_for(pricing_options)).to contain_exactly(low)
+        end
+      end
+
+      context 'when a variant has a fallback price' do
+        before do
+          low.prices.create(country_iso: nil)
+        end
+
+        it "returns that variant once" do
+          expect(product.variants_and_option_values_for.length).to eq(2)
         end
       end
     end
@@ -471,7 +481,7 @@ RSpec.describe Spree::Product, type: :model do
 
   context "#images" do
     let(:product) { create(:product) }
-    let(:image) { File.open(File.expand_path('../../../fixtures/thinking-cat.jpg', __FILE__)) }
+    let(:image) { File.open(File.expand_path('../../fixtures/thinking-cat.jpg', __dir__)) }
     let(:params) { { viewable_id: product.master.id, viewable_type: 'Spree::Variant', attachment: image, alt: "position 2", position: 2 } }
 
     before do

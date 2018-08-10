@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'rails_helper'
 
 RSpec.describe Spree::BaseHelper, type: :helper do
@@ -36,6 +38,10 @@ RSpec.describe Spree::BaseHelper, type: :helper do
 
         it "return only the countries defined by the checkout zone" do
           expect(available_countries).to eq([country])
+        end
+
+        it "returns only the countries defined by the checkout zone passed as parameter" do
+          expect(available_countries(restrict_to_zone: @country_zone.name)).to eq([country])
         end
       end
 

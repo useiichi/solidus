@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'discard'
 
 class Spree::StoreCredit < Spree::PaymentSource
@@ -190,7 +192,7 @@ class Spree::StoreCredit < Spree::PaymentSource
       save
     else
       errors.add(:invalidated_at, I18n.t('spree.store_credit.errors.cannot_invalidate_uncaptured_authorization'))
-      return false
+      false
     end
   end
 
@@ -244,6 +246,7 @@ class Spree::StoreCredit < Spree::PaymentSource
     event.update_attributes!({
       amount: action_amount || amount,
       authorization_code: action_authorization_code || event.authorization_code || generate_authorization_code,
+      amount_remaining: amount_remaining,
       user_total_amount: user.available_store_credit_total(currency: currency),
       originator: action_originator,
       update_reason: update_reason

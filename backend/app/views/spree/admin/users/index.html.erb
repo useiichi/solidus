@@ -3,7 +3,7 @@
 <% content_for :page_actions do %>
   <% if can?(:admin, Spree.user_class) && can?(:create, Spree.user_class) %>
     <li>
-      <%= button_link_to t('spree.new_user'), new_admin_user_url, id: 'admin_new_user_link' %>
+      <%= link_to t('spree.new_user'), new_admin_user_url, id: 'admin_new_user_link', class: 'btn btn-primary' %>
     </li>
   <% end %>
 <% end %>
@@ -50,7 +50,7 @@
       </div>
 
       <div class="actions filter-actions" data-hook="admin_users_index_search_buttons">
-        <%= button t('spree.search') %>
+        <%= button_tag t('spree.search'), class: 'btn btn-primary' %>
       </div>
     <% end %>
   </div>

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 ENV['RAILS_ENV'] = 'test'
 
 # Teaspoon doesn't allow you to pass client driver options to the Selenium WebDriver. This monkey patch
@@ -57,7 +59,7 @@ else
   require 'spree/testing_support/dummy_app'
 
   DummyApp.setup(
-    gem_root: File.expand_path('../../', __FILE__),
+    gem_root: File.expand_path('..', __dir__),
     lib_name: 'solidus_backend',
     auto_migrate: false
   )

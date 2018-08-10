@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'spec_helper'
 
 feature "Tiered Calculator Promotions" do
@@ -49,7 +51,7 @@ feature "Tiered Calculator Promotions" do
 
       action.calculator = Spree::Calculator::TieredFlatRate.new
       action.calculator.preferred_base_amount = 5
-      action.calculator.preferred_tiers = {100 => 10, 200 => 15, 300 => 20}
+      action.calculator.preferred_tiers = { 100 => 10, 200 => 15, 300 => 20 }
       action.calculator.save!
 
       visit spree.edit_admin_promotion_path(promotion)

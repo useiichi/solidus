@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 if ENV["COVERAGE"]
   require 'simplecov'
   SimpleCov.start('rails')
@@ -10,7 +12,7 @@ ENV["RAILS_ENV"] ||= 'test'
 require 'solidus_backend'
 require 'spree/testing_support/dummy_app'
 DummyApp.setup(
-  gem_root: File.expand_path('../../', __FILE__),
+  gem_root: File.expand_path('..', __dir__),
   lib_name: 'solidus_backend'
 )
 

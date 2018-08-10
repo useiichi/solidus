@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Spree
   class OrdersController < Spree::StoreController
     before_action :check_authorization
@@ -71,7 +73,7 @@ module Spree
 
     def populate_redirect
       flash[:error] = t('spree.populate_get_error')
-      redirect_to('/cart')
+      redirect_to spree.cart_path
     end
 
     def empty

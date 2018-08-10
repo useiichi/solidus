@@ -1,8 +1,11 @@
+# frozen_string_literal: true
+
 require 'rails/generators'
 require 'bundler'
 require 'bundler/cli'
 
 module Spree
+  # @private
   class InstallGenerator < Rails::Generators::Base
     CORE_MOUNT_ROUTE = "mount Spree::Core::Engine"
 
@@ -20,7 +23,7 @@ module Spree
       paths = superclass.source_paths
       paths << File.expand_path('../templates', "../../#{__FILE__}")
       paths << File.expand_path('../templates', "../#{__FILE__}")
-      paths << File.expand_path('../templates', __FILE__)
+      paths << File.expand_path('templates', __dir__)
       paths.flatten
     end
 
@@ -36,20 +39,20 @@ module Spree
     end
 
     def add_files
-      template 'config/initializers/spree.rb', 'config/initializers/spree.rb'
+      template 'config/initializers/spree.rb.tt', 'config/initializers/spree.rb'
     end
 
     def additional_tweaks
       return unless File.exist? 'public/robots.txt'
-      append_file "public/robots.txt", <<-ROBOTS
-User-agent: *
-Disallow: /checkout
-Disallow: /cart
-Disallow: /orders
-Disallow: /user
-Disallow: /account
-Disallow: /api
-Disallow: /password
+      append_file "public/robots.txt", <<-ROBOTS.strip_heredoc
+        User-agent: *
+        Disallow: /checkout
+        Disallow: /cart
+        Disallow: /orders
+        Disallow: /user
+        Disallow: /account
+        Disallow: /api
+        Disallow: /password
       ROBOTS
     end
 
@@ -100,10 +103,10 @@ Disallow: /password
     end
 
     def include_seed_data
-      append_file "db/seeds.rb", <<-SEEDS
-\n
-Spree::Core::Engine.load_seed if defined?(Spree::Core)
-Spree::Auth::Engine.load_seed if defined?(Spree::Auth)
+      append_file "db/seeds.rb", <<-SEEDS.strip_heredoc
+
+        Spree::Core::Engine.load_seed if defined?(Spree::Core)
+        Spree::Auth::Engine.load_seed if defined?(Spree::Auth)
       SEEDS
     end
 

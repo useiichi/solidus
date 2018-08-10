@@ -1,7 +1,11 @@
+# frozen_string_literal: true
+
 Spree::Core::Engine.routes.draw do
   namespace :admin do
     get '/search/users', to: "search#users", as: :search_users
     get '/search/products', to: "search#products", as: :search_products
+
+    put '/locale/set', to: 'locale#set', defaults: { format: :json }, as: :set_locale
 
     resources :dashboards, only: [] do
       collection do

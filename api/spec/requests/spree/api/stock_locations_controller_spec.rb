@@ -1,8 +1,9 @@
+# frozen_string_literal: true
+
 require 'spec_helper'
 
 module Spree
   describe Api::StockLocationsController, type: :request do
-
     let!(:stock_location) { create(:stock_location) }
     let!(:attributes) { [:id, :name, :address1, :address2, :city, :state_id, :state_name, :country_id, :zipcode, :phone, :active] }
 

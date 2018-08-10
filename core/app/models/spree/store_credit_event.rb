@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'discard'
 
 module Spree
@@ -42,6 +44,10 @@ module Spree
 
     def display_user_total_amount
       Spree::Money.new(user_total_amount, { currency: currency })
+    end
+
+    def display_remaining_amount
+      Spree::Money.new(amount_remaining, { currency: currency })
     end
 
     def display_event_date

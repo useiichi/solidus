@@ -1,6 +1,8 @@
+# frozen_string_literal: true
+
 module Spree
   class TaxonsController < Spree::StoreController
-    helper 'spree/products'
+    helper 'spree/products', 'spree/taxon_filters'
 
     respond_to :html
 

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'rails/all'
 require 'acts_as_list'
 require 'awesome_nested_set'
@@ -82,6 +84,7 @@ require 'spree/core/controller_helpers/store'
 require 'spree/core/controller_helpers/strong_parameters'
 require 'spree/core/role_configuration'
 require 'spree/core/stock_configuration'
+require 'spree/core/validators/email'
 require 'spree/permission_sets'
 
 require 'spree/preferences/store'

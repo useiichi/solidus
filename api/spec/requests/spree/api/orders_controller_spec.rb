@@ -1,5 +1,6 @@
+# frozen_string_literal: true
+
 require 'spec_helper'
-require 'spree/testing_support/bar_ability'
 
 module Spree
   describe Api::OrdersController, type: :request do
@@ -347,6 +348,21 @@ module Spree
           expect(credit_cards[0]['id']).to eq payment.source.id
           expect(credit_cards[0]['address']['id']).to eq credit_card.address_id
         end
+
+        it 'renders the payment source view for gateway' do
+          subject
+          expect(response).to render_template partial: 'spree/api/payments/source_views/_gateway'
+        end
+      end
+
+      context 'when store credit is present' do
+        let!(:payment) { create(:store_credit_payment, order: order, source: store_credit) }
+        let(:store_credit) { create(:store_credit) }
+
+        it 'renders the payment source view for store credit' do
+          subject
+          expect(response).to render_template partial: 'spree/api/payments/source_views/_storecredit'
+        end
       end
     end
 
@@ -371,18 +387,6 @@ module Spree
     it "can view an order if the token is passed in header" do
       get spree.api_order_path(order), headers: { "X-Spree-Order-Token" => order.guest_token }
       expect(response.status).to eq(200)
-    end
-
-    context "with BarAbility registered" do
-      before { Spree::Ability.register_ability(::BarAbility) }
-      after { Spree::Ability.remove_ability(::BarAbility) }
-
-      it "can view an order" do
-        user = build(:user, spree_roles: [Spree::Role.new(name: 'bar')])
-        allow(Spree.user_class).to receive_messages find_by: user
-        get spree.api_order_path(order)
-        expect(response.status).to eq(200)
-      end
     end
 
     it "cannot cancel an order that doesn't belong to them" do
